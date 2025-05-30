@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Dimensions,
     Image,
     Linking,
     ScrollView,
@@ -13,6 +14,8 @@ import {
     View
 } from 'react-native';
 import adoptionService, { AdoptionListing } from '../services/adoptionService';
+
+const { width } = Dimensions.get('window');
 
 export default function AdoptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
