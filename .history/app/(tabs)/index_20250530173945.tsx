@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Dimensions,
     FlatList,
     Image,
@@ -78,13 +77,21 @@ const featureCards: FeatureCard[] = [
   {
     id: 5,
     icon: '🏥',
-    title: 'Veteriner & Petshoplar',
-    description: 'Size en yakın veteriner ve petshopları keşfedin.',
+    title: 'Veterinerler',
+    description: 'Size en yakın veterinerleri keşfedin.',
     color: '#FFF3E0',
     route: '/services'
   },
   {
     id: 6,
+    icon: '🛍️',
+    title: 'Petshoplar',
+    description: 'Petshop ürünlerini ve konumları inceleyin.',
+    color: '#F1F8E9',
+    route: '/services'
+  },
+  {
+    id: 7,
     icon: '❤️',
     title: 'Bağış Yap',
     description: 'Sokak hayvanları için destek olun, mama bağışlayın.',
@@ -133,7 +140,7 @@ export default function HomeScreen() {
       
       if (!token || !userString) {
         // Giriş yapılmamış, login sayfasına yönlendir
-        router.replace('/login');
+        router.replace('/(auth)/login');
         return;
       }
       
@@ -141,39 +148,15 @@ export default function HomeScreen() {
       setUserData(user);
     } catch (error) {
       console.error('Error loading user data:', error);
-      router.replace('/login');
+      router.replace('/(auth)/login');
     } finally {
       setLoading(false);
     }
   };
 
   const handleFeaturePress = (route: string) => {
+    // Route navigation will be implemented later
     console.log('Navigate to:', route);
-    
-    switch (route) {
-      case '/adopt':
-        router.push('/(tabs)/adopt');
-        break;
-      case '/lost':
-        router.push('/(tabs)/lost');
-        break;
-      case '/community':
-        router.push('/(tabs)/community');
-        break;
-      case '/services':
-        router.push('/(tabs)/services');
-        break;
-      case '/breed-detector':
-        // TODO: Implement breed detector page
-        Alert.alert('Yakında!', 'Cins dedektifi özelliği yakında eklenecek.');
-        break;
-      case '/donate':
-        // TODO: Implement donation page
-        Alert.alert('Yakında!', 'Bağış özelliği yakında eklenecek.');
-        break;
-      default:
-        console.log('Unknown route:', route);
-    }
   };
 
   const renderFeatureCard = ({ item, index }: { item: FeatureCard; index: number }) => (

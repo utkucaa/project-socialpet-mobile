@@ -23,9 +23,9 @@ export default function TabLayout() {
             position: 'absolute',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             borderTopWidth: 0,
-            borderRadius: 0,
-            marginHorizontal: 0,
-            marginBottom: 0,
+            borderRadius: 20,
+            marginHorizontal: 10,
+            marginBottom: 20,
             height: 85,
             paddingBottom: 20,
             paddingTop: 10,
@@ -40,7 +40,6 @@ export default function TabLayout() {
             height: 70,
             paddingBottom: 10,
             paddingTop: 10,
-            marginBottom: 0,
           },
         }),
       }}>
@@ -56,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="adopt"
         options={{
-          title: 'Sahiplendirme',
+          title: 'Sahiplendir',
           tabBarIcon: ({ color, focused }) => (
             <IconSymbol size={28} name={focused ? 'heart.fill' : 'heart'} color={color} />
           ),

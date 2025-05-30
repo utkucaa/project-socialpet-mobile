@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     Dimensions,
     FlatList,
     Image,
@@ -148,32 +147,8 @@ export default function HomeScreen() {
   };
 
   const handleFeaturePress = (route: string) => {
+    // Route navigation will be implemented later
     console.log('Navigate to:', route);
-    
-    switch (route) {
-      case '/adopt':
-        router.push('/(tabs)/adopt');
-        break;
-      case '/lost':
-        router.push('/(tabs)/lost');
-        break;
-      case '/community':
-        router.push('/(tabs)/community');
-        break;
-      case '/services':
-        router.push('/(tabs)/services');
-        break;
-      case '/breed-detector':
-        // TODO: Implement breed detector page
-        Alert.alert('Yakında!', 'Cins dedektifi özelliği yakında eklenecek.');
-        break;
-      case '/donate':
-        // TODO: Implement donation page
-        Alert.alert('Yakında!', 'Bağış özelliği yakında eklenecek.');
-        break;
-      default:
-        console.log('Unknown route:', route);
-    }
   };
 
   const renderFeatureCard = ({ item, index }: { item: FeatureCard; index: number }) => (
