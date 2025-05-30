@@ -14,8 +14,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import adoptionService, { AdoptionListing } from '../../services/adoptionService';
-import lostPetService, { LostPet } from '../../services/lostPetService';
+import { AdoptionListing, adoptionService } from '../../services/adoptionService';
+import { LostPet, lostPetService } from '../../services/lostPetService';
 
 const { width } = Dimensions.get('window');
 
@@ -144,7 +144,7 @@ export default function HomeScreen() {
       ]);
 
       // Sahiplenme ilanlarını RecommendedItem formatına dönüştür
-      const adoptionItems: RecommendedItem[] = adoptionListings.slice(0, 3).map((listing: AdoptionListing) => ({
+      const adoptionItems: RecommendedItem[] = adoptionListings.slice(0, 3).map((listing) => ({
         id: listing.id,
         title: listing.title || listing.petName,
         image: listing.imageUrl || 'https://via.placeholder.com/200x150/FFD700/FFFFFF?text=🐕',
@@ -154,7 +154,7 @@ export default function HomeScreen() {
       }));
 
       // Kayıp ilanlarını RecommendedItem formatına dönüştür
-      const lostItems: RecommendedItem[] = lostPets.slice(0, 3).map((pet: LostPet) => ({
+      const lostItems: RecommendedItem[] = lostPets.slice(0, 3).map((pet) => ({
         id: pet.id,
         title: pet.title,
         image: pet.imageUrl || 'https://via.placeholder.com/200x150/8B4513/FFFFFF?text=🐱',

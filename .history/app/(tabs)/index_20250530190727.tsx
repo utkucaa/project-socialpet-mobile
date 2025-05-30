@@ -3,19 +3,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  FlatList,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    FlatList,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import adoptionService, { AdoptionListing } from '../../services/adoptionService';
-import lostPetService, { LostPet } from '../../services/lostPetService';
 
 const { width } = Dimensions.get('window');
 
@@ -33,7 +31,6 @@ interface RecommendedItem {
   image: string;
   type: 'adopt' | 'lost';
   location: string;
-  data: AdoptionListing | LostPet;
 }
 
 interface FeatureCard {
@@ -96,21 +93,38 @@ const featureCards: FeatureCard[] = [
   }
 ];
 
+// Mock data for recommended listings
+const recommendedItems: RecommendedItem[] = [
+  {
+    id: 1,
+    title: 'Sevimli Golden Retriever',
+    image: 'https://via.placeholder.com/200x150/FFD700/FFFFFF?text=🐕',
+    type: 'adopt',
+    location: 'İstanbul, Kadıköy'
+  },
+  {
+    id: 2,
+    title: 'Kayıp Tekir Kedi',
+    image: 'https://via.placeholder.com/200x150/8B4513/FFFFFF?text=🐱',
+    type: 'lost',
+    location: 'Ankara, Çankaya'
+  },
+  {
+    id: 3,
+    title: 'Minik Labrador',
+    image: 'https://via.placeholder.com/200x150/32CD32/FFFFFF?text=🐶',
+    type: 'adopt',
+    location: 'İzmir, Bornova'
+  }
+];
+
 export default function HomeScreen() {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [recommendedItems, setRecommendedItems] = useState<RecommendedItem[]>([]);
-  const [recommendedLoading, setRecommendedLoading] = useState(true);
 
   useEffect(() => {
     checkAuthAndLoadUser();
   }, []);
-
-  useEffect(() => {
-    if (userData) {
-      loadRecommendedItems();
-    }
-  }, [userData]);
 
   const checkAuthAndLoadUser = async () => {
     try {
@@ -130,57 +144,6 @@ export default function HomeScreen() {
       router.replace('/login');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadRecommendedItems = async () => {
-    try {
-      setRecommendedLoading(true);
-      
-      // Paralel olarak hem sahiplenme hem kayıp ilanlarını çek
-      const [adoptionListings, lostPets] = await Promise.all([
-        adoptionService.getAdoptionListings().catch(() => []),
-        lostPetService.getLostPets().catch(() => [])
-      ]);
-
-      // Sahiplenme ilanlarını RecommendedItem formatına dönüştür
-      const adoptionItems: RecommendedItem[] = adoptionListings.slice(0, 3).map((listing: AdoptionListing) => ({
-        id: listing.id,
-        title: listing.title || listing.petName,
-        image: listing.imageUrl || 'https://via.placeholder.com/200x150/FFD700/FFFFFF?text=🐕',
-        type: 'adopt' as const,
-        location: `${listing.city}, ${listing.district}`,
-        data: listing
-      }));
-
-      // Kayıp ilanlarını RecommendedItem formatına dönüştür
-      const lostItems: RecommendedItem[] = lostPets.slice(0, 3).map((pet: LostPet) => ({
-        id: pet.id,
-        title: pet.title,
-        image: pet.imageUrl || 'https://via.placeholder.com/200x150/8B4513/FFFFFF?text=🐱',
-        type: 'lost' as const,
-        location: pet.lastSeenLocation || pet.location,
-        data: pet
-      }));
-
-      // İki listeyi birleştir ve karışık hale getir
-      const allItems = [...adoptionItems, ...lostItems];
-      
-      // Fisher-Yates shuffle algoritması ile karıştır
-      for (let i = allItems.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allItems[i], allItems[j]] = [allItems[j], allItems[i]];
-      }
-
-      // Maksimum 6 ilan göster
-      setRecommendedItems(allItems.slice(0, 6));
-      
-    } catch (error) {
-      console.error('Önerilen ilanlar yüklenirken hata:', error);
-      // Hata durumunda boş array set et
-      setRecommendedItems([]);
-    } finally {
-      setRecommendedLoading(false);
     }
   };
 
@@ -226,21 +189,11 @@ export default function HomeScreen() {
   );
 
   const renderRecommendedItem = ({ item }: { item: RecommendedItem }) => (
-    <TouchableOpacity 
-      style={styles.recommendedCard} 
-      activeOpacity={0.8}
-      onPress={() => {
-        if (item.type === 'adopt') {
-          router.push(`/adoption-detail?id=${item.id}`);
-        } else {
-          router.push(`/lost-detail?id=${item.id}`);
-        }
-      }}
-    >
+    <TouchableOpacity style={styles.recommendedCard} activeOpacity={0.8}>
       <Image source={{ uri: item.image }} style={styles.recommendedImage} />
       <View style={styles.recommendedInfo}>
-        <Text style={styles.recommendedTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.recommendedLocation} numberOfLines={1}>{item.location}</Text>
+        <Text style={styles.recommendedTitle}>{item.title}</Text>
+        <Text style={styles.recommendedLocation}>{item.location}</Text>
         <View style={[styles.recommendedType, { 
           backgroundColor: item.type === 'adopt' ? '#AB75C2' : '#FF6B6B' 
         }]}>
@@ -295,31 +248,14 @@ export default function HomeScreen() {
 
         <View style={styles.recommendedSection}>
           <Text style={styles.sectionTitle}>✨ Önerilen İlanlar</Text>
-          {recommendedLoading ? (
-            <View style={styles.recommendedLoadingContainer}>
-              <ActivityIndicator size="small" color="#AB75C2" />
-              <Text style={styles.recommendedLoadingText}>İlanlar yükleniyor...</Text>
-            </View>
-          ) : recommendedItems.length > 0 ? (
-            <FlatList
-              data={recommendedItems}
-              renderItem={renderRecommendedItem}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.recommendedList}
-              ItemSeparatorComponent={() => <View style={{ width: 15 }} />}
-            />
-          ) : (
-            <View style={styles.noRecommendedContainer}>
-              <Text style={styles.noRecommendedText}>Henüz ilan bulunmamaktadır.</Text>
-              <TouchableOpacity 
-                style={styles.refreshButton}
-                onPress={loadRecommendedItems}
-              >
-                <Text style={styles.refreshButtonText}>Yenile</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <FlatList
+            data={recommendedItems}
+            renderItem={renderRecommendedItem}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recommendedList}
+            ItemSeparatorComponent={() => <View style={{ width: 15 }} />}
+          />
         </View>
 
         <View style={styles.quickStats}>
@@ -519,36 +455,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     fontWeight: '500',
-  },
-  recommendedLoadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  recommendedLoadingText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  noRecommendedContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  noRecommendedText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 15,
-  },
-  refreshButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#AB75C2',
-    borderRadius: 8,
-  },
-  refreshButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
