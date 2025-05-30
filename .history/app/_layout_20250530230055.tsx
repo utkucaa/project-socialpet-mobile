@@ -23,8 +23,6 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="adoption-detail" options={{ headerShown: false }} />
-        <Stack.Screen name="lost-detail" options={{ headerShown: false }} />
-        <Stack.Screen name="question-detail" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

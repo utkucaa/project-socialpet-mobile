@@ -278,6 +278,15 @@ export default function CommunityScreen() {
                   />
                 </View>
 
+                <View style={styles.formActions}>
+                  <TouchableOpacity style={styles.actionButton}>
+                    <Text style={styles.actionButtonText}>📷 Fotoğraf yüklemek istiyorum</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton}>
+                    <Text style={styles.actionButtonText}>📊 Anket oluşturmak istiyorum</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <TouchableOpacity 
                   style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
                   onPress={handleSubmit}
@@ -639,6 +648,22 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 14,
     color: '#374151',
+  },
+  formActions: {
+    marginBottom: 20,
+  },
+  actionButton: {
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  actionButtonText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
   },
   submitButton: {
     backgroundColor: '#AB75C2',

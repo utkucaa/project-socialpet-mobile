@@ -180,43 +180,36 @@ export default function LostScreen() {
     setSelectedPhoto(null);
   };
 
-  const renderListingCard = ({ item }: { item: LostPet }) => {
-    const getImageSource = () => {
-      if (item.imageUrl && item.imageUrl.startsWith('http')) {
-        return { uri: item.imageUrl };
-      }
-      return { uri: 'https://via.placeholder.com/150/AB75C2/FFFFFF' };
-    };
-
-    return (
-      <TouchableOpacity style={styles.listingCard} activeOpacity={0.8}>
-        <Image 
-          source={getImageSource()} 
-          style={styles.listingImage} 
-        />
-        <View style={styles.listingInfo}>
-          <Text style={styles.listingTitle}>{item.title}</Text>
-          <Text style={styles.listingDetails}>
-            {item.animalType} • {item.location}
-          </Text>
-          <Text style={styles.listingDescription} numberOfLines={2}>
-            {item.details}
-          </Text>
-          <TouchableOpacity 
-            style={styles.detailButton}
-            onPress={() => {
-              router.push({
-                pathname: '/lost-detail' as any,
-                params: { id: item.id.toString() }
-              });
-            }}
-          >
-            <Text style={styles.detailButtonText}>Detayları Gör</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderListingCard = ({ item }: { item: LostPet }) => (
+    <TouchableOpacity style={styles.listingCard} activeOpacity={0.8}>
+      <Image 
+        source={{ 
+          uri: item.imageUrl || 'https://via.placeholder.com/150/AB75C2/FFFFFF?text=Pet' 
+        }} 
+        style={styles.listingImage} 
+      />
+      <View style={styles.listingInfo}>
+        <Text style={styles.listingTitle}>{item.title}</Text>
+        <Text style={styles.listingDetails}>
+          {item.animalType} • {item.location}
+        </Text>
+        <Text style={styles.listingDescription} numberOfLines={2}>
+          {item.details}
+        </Text>
+        <TouchableOpacity 
+          style={styles.detailButton}
+          onPress={() => {
+            router.push({
+              pathname: '/lost-detail' as any,
+              params: { id: item.id.toString() }
+            });
+          }}
+        >
+          <Text style={styles.detailButtonText}>Detayları Gör</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>

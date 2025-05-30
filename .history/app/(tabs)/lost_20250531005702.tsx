@@ -180,43 +180,37 @@ export default function LostScreen() {
     setSelectedPhoto(null);
   };
 
-  const renderListingCard = ({ item }: { item: LostPet }) => {
-    const getImageSource = () => {
-      if (item.imageUrl && item.imageUrl.startsWith('http')) {
-        return { uri: item.imageUrl };
-      }
-      return { uri: 'https://via.placeholder.com/150/AB75C2/FFFFFF' };
-    };
-
-    return (
-      <TouchableOpacity style={styles.listingCard} activeOpacity={0.8}>
-        <Image 
-          source={getImageSource()} 
-          style={styles.listingImage} 
-        />
-        <View style={styles.listingInfo}>
-          <Text style={styles.listingTitle}>{item.title}</Text>
-          <Text style={styles.listingDetails}>
-            {item.animalType} • {item.location}
-          </Text>
-          <Text style={styles.listingDescription} numberOfLines={2}>
-            {item.details}
-          </Text>
-          <TouchableOpacity 
-            style={styles.detailButton}
-            onPress={() => {
-              router.push({
-                pathname: '/lost-detail' as any,
-                params: { id: item.id.toString() }
-              });
-            }}
-          >
-            <Text style={styles.detailButtonText}>Detayları Gör</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderListingCard = ({ item }: { item: LostPet }) => (
+    <TouchableOpacity style={styles.listingCard} activeOpacity={0.8}>
+      <Image 
+        source={{ uri: item.imageUrl || 'https://via.placeholder.com/150/AB75C2/FFFFFF?text=🔍' }} 
+        style={styles.listingImage} 
+      />
+      <View style={styles.listingInfo}>
+        <Text style={styles.listingTitle}>{item.title}</Text>
+        <Text style={styles.listingDetails}>
+          {item.animalType} • {item.location} • {item.status}
+        </Text>
+        <Text style={styles.listingDescription} numberOfLines={2}>
+          {item.details}
+        </Text>
+        <Text style={styles.lastSeen}>
+          Son görülme: {item.lastSeenLocation}
+        </Text>
+        <TouchableOpacity 
+          style={styles.detailButton}
+          onPress={() => {
+            router.push({
+              pathname: '/lost-detail' as any,
+              params: { id: item.id.toString() }
+            });
+          }}
+        >
+          <Text style={styles.detailButtonText}>Detayları Gör</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
@@ -544,27 +538,25 @@ const styles = StyleSheet.create({
   },
   listingCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 15,
+    marginBottom: 20,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    flexDirection: 'row',
+    shadowRadius: 3.84,
+    overflow: 'hidden',
   },
   listingImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    marginRight: 15,
+    width: '100%',
+    height: 200,
+    backgroundColor: '#F3F4F6',
   },
   listingInfo: {
-    flex: 1,
+    padding: 15,
   },
   listingTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 5,
@@ -575,22 +567,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listingDescription: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  lastSeen: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#AB75C2',
+    fontWeight: 'bold',
     marginBottom: 10,
-    lineHeight: 16,
   },
   detailButton: {
     backgroundColor: '#AB75C2',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
   detailButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,

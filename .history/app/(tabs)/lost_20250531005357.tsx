@@ -15,6 +15,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View
 } from 'react-native';
 import lostPetService, { LostPet, LostPetData } from '../../services/lostPetService';
@@ -27,7 +28,13 @@ const additionalInfoOptions = ['', 'Bulana ödül verilecektir', 'Acil'];
 export default function LostScreen() {
   const router = useRouter();
   const [listings, setListings] = useState<LostPet[]>([]);
+  const [filteredListings, setFilteredListings] = useState<LostPet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchFilter, setSearchFilter] = useState({
+    petType: '',
+    city: '',
+    status: ''
+  });
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<LostPetData>({
@@ -46,6 +53,9 @@ export default function LostScreen() {
   });
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showPetDropdown, setShowPetDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showAnimalTypeDropdown, setShowAnimalTypeDropdown] = useState(false);
 
   useEffect(() => {
@@ -57,12 +67,74 @@ export default function LostScreen() {
       setLoading(true);
       const data = await lostPetService.getLostPets();
       setListings(data);
+      setFilteredListings(data);
     } catch (error: any) {
       console.error('İlanlar yüklenirken hata:', error);
       Alert.alert('Hata', error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearSearch = () => {
+    setSearchFilter({
+      petType: '',
+      city: '',
+      status: ''
+    });
+    setFilteredListings(listings);
+    setShowPetDropdown(false);
+    setShowCityDropdown(false);
+    setShowStatusDropdown(false);
+  };
+
+  const handleSearch = () => {
+    console.log('Manuel arama yapıldı:', searchFilter);
+    
+    if (filteredListings.length === 0 && (searchFilter.petType || searchFilter.city || searchFilter.status)) {
+      Alert.alert('Sonuç Bulunamadı', 'Arama kriterlerinize uygun ilan bulunamadı.');
+    } else if (searchFilter.petType || searchFilter.city || searchFilter.status) {
+      Alert.alert('Arama Tamamlandı', `${filteredListings.length} ilan bulundu.`);
+    }
+  };
+
+  const showPetTypeSelector = () => {
+    setShowPetDropdown(!showPetDropdown);
+    setShowCityDropdown(false);
+    setShowStatusDropdown(false);
+  };
+
+  const showCitySelector = () => {
+    setShowCityDropdown(!showCityDropdown);
+    setShowPetDropdown(false);
+    setShowStatusDropdown(false);
+  };
+
+  const showStatusSelector = () => {
+    setShowStatusDropdown(!showStatusDropdown);
+    setShowPetDropdown(false);
+    setShowCityDropdown(false);
+  };
+
+  const selectPetType = (type: string) => {
+    const newFilter = {...searchFilter, petType: type};
+    setSearchFilter(newFilter);
+    setShowPetDropdown(false);
+    applyFilters(newFilter);
+  };
+
+  const selectCity = (city: string) => {
+    const newFilter = {...searchFilter, city: city};
+    setSearchFilter(newFilter);
+    setShowCityDropdown(false);
+    applyFilters(newFilter);
+  };
+
+  const selectStatus = (status: string) => {
+    const newFilter = {...searchFilter, status: status};
+    setSearchFilter(newFilter);
+    setShowStatusDropdown(false);
+    applyFilters(newFilter);
   };
 
   const selectAnimalType = (type: string) => {
@@ -180,43 +252,37 @@ export default function LostScreen() {
     setSelectedPhoto(null);
   };
 
-  const renderListingCard = ({ item }: { item: LostPet }) => {
-    const getImageSource = () => {
-      if (item.imageUrl && item.imageUrl.startsWith('http')) {
-        return { uri: item.imageUrl };
-      }
-      return { uri: 'https://via.placeholder.com/150/AB75C2/FFFFFF' };
-    };
-
-    return (
-      <TouchableOpacity style={styles.listingCard} activeOpacity={0.8}>
-        <Image 
-          source={getImageSource()} 
-          style={styles.listingImage} 
-        />
-        <View style={styles.listingInfo}>
-          <Text style={styles.listingTitle}>{item.title}</Text>
-          <Text style={styles.listingDetails}>
-            {item.animalType} • {item.location}
-          </Text>
-          <Text style={styles.listingDescription} numberOfLines={2}>
-            {item.details}
-          </Text>
-          <TouchableOpacity 
-            style={styles.detailButton}
-            onPress={() => {
-              router.push({
-                pathname: '/lost-detail' as any,
-                params: { id: item.id.toString() }
-              });
-            }}
-          >
-            <Text style={styles.detailButtonText}>Detayları Gör</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const renderListingCard = ({ item }: { item: LostPet }) => (
+    <TouchableOpacity style={styles.listingCard} activeOpacity={0.8}>
+      <Image 
+        source={{ uri: item.imageUrl || 'https://via.placeholder.com/150/FF6B6B/FFFFFF?text=🔍' }} 
+        style={styles.listingImage} 
+      />
+      <View style={styles.listingInfo}>
+        <Text style={styles.listingTitle}>{item.title}</Text>
+        <Text style={styles.listingDetails}>
+          {item.animalType} • {item.location} • {item.status}
+        </Text>
+        <Text style={styles.listingDescription} numberOfLines={2}>
+          {item.details}
+        </Text>
+        <Text style={styles.lastSeen}>
+          Son görülme: {item.lastSeenLocation}
+        </Text>
+        <TouchableOpacity 
+          style={styles.detailButton}
+          onPress={() => {
+            router.push({
+              pathname: '/lost-detail' as any,
+              params: { id: item.id.toString() }
+            });
+          }}
+        >
+          <Text style={styles.detailButtonText}>Detayları Gör</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
@@ -391,11 +457,36 @@ export default function LostScreen() {
     }
   };
 
+  const applyFilters = (filters: typeof searchFilter) => {
+    let filtered = listings;
+
+    if (filters.petType) {
+      filtered = filtered.filter(listing => 
+        listing.animalType?.toLowerCase().includes(filters.petType.toLowerCase()) ||
+        listing.category?.toLowerCase().includes(filters.petType.toLowerCase())
+      );
+    }
+
+    if (filters.city) {
+      filtered = filtered.filter(listing => 
+        listing.location?.toLowerCase().includes(filters.city.toLowerCase())
+      );
+    }
+
+    if (filters.status) {
+      filtered = filtered.filter(listing => 
+        listing.status?.toLowerCase().includes(filters.status.toLowerCase())
+      );
+    }
+
+    setFilteredListings(filtered);
+  };
+
   // Loading screen
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#AB75C2" />
+        <ActivityIndicator size="large" color="#FF6B6B" />
         <Text style={styles.loadingText}>Kayıp ilanları yükleniyor...</Text>
       </View>
     );
@@ -405,7 +496,7 @@ export default function LostScreen() {
     <View style={styles.container}>
       {/* Header */}
       <LinearGradient
-        colors={['#AB75C2', '#9B6BB0']}
+        colors={['#FF6B6B', '#FF5252']}
         style={styles.header}
       >
         <Text style={styles.headerTitle}>🔍 Kayıp İlanları</Text>
@@ -420,14 +511,107 @@ export default function LostScreen() {
         <Text style={styles.createButtonText}>+ Yeni İlan Ver</Text>
       </TouchableOpacity>
 
-      {/* İlanlar Başlığı */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>İlanlar</Text>
+      {/* Search Filters */}
+      <View style={styles.filtersContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity 
+            style={[styles.filterButton, searchFilter.petType ? styles.filterButtonActive : null]}
+            onPress={showPetTypeSelector}
+          >
+            <Text style={[styles.filterButtonText, searchFilter.petType ? styles.filterButtonTextActive : null]}>
+              {searchFilter.petType || 'Hayvan Türü'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.filterButton, searchFilter.city ? styles.filterButtonActive : null]}
+            onPress={showCitySelector}
+          >
+            <Text style={[styles.filterButtonText, searchFilter.city ? styles.filterButtonTextActive : null]}>
+              {searchFilter.city || 'Şehir'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.filterButton, searchFilter.status ? styles.filterButtonActive : null]}
+            onPress={showStatusSelector}
+          >
+            <Text style={[styles.filterButtonText, searchFilter.status ? styles.filterButtonTextActive : null]}>
+              {searchFilter.status || 'Durum'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+            <Text style={styles.searchButtonText}>Ara</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.clearButton} onPress={clearSearch}>
+            <Text style={styles.clearButtonText}>Temizle</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
+
+      {/* Dropdown Lists */}
+      {showPetDropdown && (
+        <View style={styles.dropdownOverlay}>
+          <TouchableWithoutFeedback onPress={() => setShowPetDropdown(false)}>
+            <View style={styles.dropdownBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={styles.dropdownContainer}>
+            {petTypes.map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={styles.dropdownOptionItem}
+                onPress={() => selectPetType(type)}
+              >
+                <Text style={styles.dropdownOptionText}>{type}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {showCityDropdown && (
+        <View style={styles.dropdownOverlay}>
+          <TouchableWithoutFeedback onPress={() => setShowCityDropdown(false)}>
+            <View style={styles.dropdownBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={styles.dropdownContainer}>
+            {cities.map((city) => (
+              <TouchableOpacity
+                key={city}
+                style={styles.dropdownOptionItem}
+                onPress={() => selectCity(city)}
+              >
+                <Text style={styles.dropdownOptionText}>{city}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {showStatusDropdown && (
+        <View style={styles.dropdownOverlay}>
+          <TouchableWithoutFeedback onPress={() => setShowStatusDropdown(false)}>
+            <View style={styles.dropdownBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={styles.dropdownContainer}>
+            {statusOptions.map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={styles.dropdownOptionItem}
+                onPress={() => selectStatus(status)}
+              >
+                <Text style={styles.dropdownOptionText}>{status}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Listings */}
       <FlatList
-        data={listings}
+        data={filteredListings}
         renderItem={renderListingCard}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContainer}
@@ -504,7 +688,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#E8D5F2',
+    color: '#FFE4E4',
   },
   loadingContainer: {
     flex: 1,
@@ -518,7 +702,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   createButton: {
-    backgroundColor: '#AB75C2',
+    backgroundColor: '#FF6B6B',
     marginHorizontal: 20,
     marginVertical: 15,
     paddingVertical: 15,
@@ -530,41 +714,108 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  sectionHeader: {
-    paddingHorizontal: 20,
+  filtersContainer: {
+    paddingHorizontal: 15,
     paddingVertical: 10,
   },
-  sectionTitle: {
-    fontSize: 20,
+  filterButton: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  filterButtonActive: {
+    backgroundColor: '#FF6B6B',
+  },
+  filterButtonText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  filterButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  searchButton: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  searchButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#1F2937',
+  },
+  clearButton: {
+    backgroundColor: '#6B7280',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  clearButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  dropdownBackdrop: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 180,
+    left: 20,
+    right: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    maxHeight: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  dropdownOptionItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    color: '#374151',
   },
   listContainer: {
     padding: 20,
   },
   listingCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 15,
+    marginBottom: 20,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    flexDirection: 'row',
+    shadowRadius: 3.84,
+    overflow: 'hidden',
   },
   listingImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    marginRight: 15,
+    width: '100%',
+    height: 200,
+    backgroundColor: '#F3F4F6',
   },
   listingInfo: {
-    flex: 1,
+    padding: 15,
   },
   listingTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 5,
@@ -575,22 +826,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   listingDescription: {
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  lastSeen: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: '#FF6B6B',
+    fontWeight: 'bold',
     marginBottom: 10,
-    lineHeight: 16,
   },
   detailButton: {
-    backgroundColor: '#AB75C2',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
   detailButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -607,7 +864,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E5E7EB',
   },
   cancelButton: {
-    color: '#AB75C2',
+    color: '#FF6B6B',
     fontSize: 16,
   },
   modalTitle: {
@@ -630,7 +887,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   stepDotActive: {
-    backgroundColor: '#AB75C2',
+    backgroundColor: '#FF6B6B',
   },
   stepText: {
     color: '#6B7280',
@@ -768,7 +1025,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   nextButton: {
-    backgroundColor: '#AB75C2',
+    backgroundColor: '#FF6B6B',
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 8,

@@ -16,38 +16,17 @@ import {
 } from 'react-native';
 import communityService, { Question, QuestionData } from '../../services/communityService';
 
-interface ExtendedQuestionData extends QuestionData {
-  topic: string;
-}
-
-const topicOptions = [
-  { label: 'Sorunuz için en uygun konuyu seçiniz', value: '' },
-  { label: 'Köpek Eğitimi ve Psikolojisi', value: 'kopek-egitim' },
-  { label: 'Köpek Irkları', value: 'kopek-irk' },
-  { label: 'Köpek Bakımı ve Sağlığı', value: 'kopek-bakim' },
-  { label: 'Köpek Beslenmesi', value: 'kopek-beslenme' },
-  { label: 'Kedi Irkları', value: 'kedi-irk' },
-  { label: 'Kedi Bakımı ve Sağlığı', value: 'kedi-bakim' },
-  { label: 'Kedi Genel Konular', value: 'kedi-genel' },
-  { label: 'Kemirgenler Genel Konular', value: 'kemirgen' },
-  { label: 'Sürüngenler Genel Konular', value: 'surungen' },
-  { label: 'Kuşlar Genel Konular', value: 'kus' },
-  { label: 'Akvaryum ve Balık Genel Konular', value: 'akvaryum' },
-];
-
 export default function CommunityScreen() {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [formData, setFormData] = useState<ExtendedQuestionData>({
-    topic: '',
+  const [formData, setFormData] = useState<QuestionData>({
     title: '',
     content: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showTopicDropdown, setShowTopicDropdown] = useState(false);
 
   useEffect(() => {
     loadQuestions();
@@ -94,10 +73,6 @@ export default function CommunityScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.topic) {
-      Alert.alert('Eksik Bilgi', 'Lütfen bir konu seçin.');
-      return;
-    }
     if (!formData.title.trim() || !formData.content.trim()) {
       Alert.alert('Eksik Bilgi', 'Lütfen tüm alanları doldurun.');
       return;
@@ -105,10 +80,7 @@ export default function CommunityScreen() {
 
     try {
       setSubmitting(true);
-      await communityService.createQuestion({
-        title: formData.title,
-        content: formData.content
-      });
+      await communityService.createQuestion(formData);
       
       Alert.alert('Başarılı!', 'Sorunuz başarıyla oluşturuldu.', [
         {
@@ -130,7 +102,6 @@ export default function CommunityScreen() {
 
   const resetForm = () => {
     setFormData({
-      topic: '',
       title: '',
       content: ''
     });
@@ -141,16 +112,6 @@ export default function CommunityScreen() {
       pathname: '/question-detail',
       params: { id: questionId.toString() }
     });
-  };
-
-  const selectTopic = (topic: string) => {
-    setFormData({...formData, topic});
-    setShowTopicDropdown(false);
-  };
-
-  const getTopicLabel = (value: string) => {
-    const topic = topicOptions.find(option => option.value === value);
-    return topic ? topic.label : 'Sorunuz için en uygun konuyu seçiniz';
   };
 
   const renderQuestionCard = ({ item }: { item: Question }) => (
@@ -204,7 +165,7 @@ export default function CommunityScreen() {
           <TouchableWithoutFeedback onPress={() => {}}>
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Yeni Soru Sor</Text>
+                <Text style={styles.modalTitle}>Yeni Soru Oluştur</Text>
                 <TouchableOpacity 
                   style={styles.closeButton}
                   onPress={() => setCreateModalVisible(false)}
@@ -213,67 +174,27 @@ export default function CommunityScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.breadcrumb}>
-                  <Text style={styles.breadcrumbText}>
-                    <Text style={styles.breadcrumbLink}>Topluluk</Text> » <Text style={styles.breadcrumbCurrent}>Yeni Soru Sor</Text>
-                  </Text>
-                </View>
-
+              <ScrollView style={styles.modalContent}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Konu *</Text>
-                  <TouchableWithoutFeedback onPress={() => setShowTopicDropdown(false)}>
-                    <View>
-                      <TouchableOpacity 
-                        style={styles.dropdownButton}
-                        onPress={() => setShowTopicDropdown(!showTopicDropdown)}
-                      >
-                        <Text style={[styles.dropdownButtonText, !formData.topic && styles.placeholderText]}>
-                          {getTopicLabel(formData.topic)}
-                        </Text>
-                        <Text style={[styles.dropdownArrow, showTopicDropdown && styles.dropdownArrowUp]}>▼</Text>
-                      </TouchableOpacity>
-                      
-                      {showTopicDropdown && (
-                        <View style={styles.dropdownMenu}>
-                          {topicOptions.map((option) => (
-                            <TouchableOpacity 
-                              key={option.value}
-                              style={styles.dropdownItem} 
-                              onPress={() => selectTopic(option.value)}
-                            >
-                              <Text style={[styles.dropdownItemText, option.value === '' && styles.placeholderText]}>
-                                {option.label}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  </TouchableWithoutFeedback>
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Soru *</Text>
+                  <Text style={styles.label}>Soru Başlığı</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="Sorunuzun özetini anlaşılır bir şekilde buraya yazmalısınız. Soru cümlesi olmalıdır."
+                    placeholder="Sorunuzun başlığını yazın..."
                     value={formData.title}
                     onChangeText={(text) => setFormData({...formData, title: text})}
-                    maxLength={200}
-                    multiline={true}
+                    maxLength={100}
                   />
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Detay *</Text>
+                  <Text style={styles.label}>Soru Detayı</Text>
                   <TextInput
                     style={[styles.input, styles.textArea]}
-                    placeholder="Sorunuzu detaylı anlatırsanız, diğer üyeler ve uzmanlardan daha doğru cevaplar alabilirsiniz."
+                    placeholder="Sorunuzun detaylarını açıklayın..."
                     value={formData.content}
                     onChangeText={(text) => setFormData({...formData, content: text})}
                     multiline={true}
-                    numberOfLines={8}
+                    numberOfLines={6}
                     textAlignVertical="top"
                   />
                 </View>
@@ -286,7 +207,7 @@ export default function CommunityScreen() {
                   {submitting ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
-                    <Text style={styles.submitButtonText}>Sor</Text>
+                    <Text style={styles.submitButtonText}>Soruyu Gönder</Text>
                   )}
                 </TouchableOpacity>
               </ScrollView>
@@ -301,14 +222,14 @@ export default function CommunityScreen() {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#AB75C2', '#9B6BB0']}
+          colors={['#667eea', '#764ba2']}
           style={styles.header}
         >
           <Text style={styles.headerTitle}>💬 Topluluk</Text>
           <Text style={styles.headerSubtitle}>Sor & Yanıtla</Text>
         </LinearGradient>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#AB75C2" />
+          <ActivityIndicator size="large" color="#667eea" />
           <Text style={styles.loadingText}>Sorular yükleniyor...</Text>
         </View>
       </View>
@@ -318,7 +239,7 @@ export default function CommunityScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#AB75C2', '#9B6BB0']}
+        colors={['#667eea', '#764ba2']}
         style={styles.header}
       >
         <Text style={styles.headerTitle}>💬 Topluluk</Text>
@@ -331,12 +252,7 @@ export default function CommunityScreen() {
           onPress={handleCreateQuestion}
           activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={['#AB75C2', '#9B6BB0']}
-            style={styles.createButtonGradient}
-          >
-            <Text style={styles.createButtonText}>+ Yeni Soru Oluştur</Text>
-          </LinearGradient>
+          <Text style={styles.createButtonText}>+ Yeni Soru Oluştur</Text>
         </TouchableOpacity>
 
         {questions.length > 0 ? (
@@ -381,47 +297,48 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#F3E5F5',
+    color: '#E8E5F5',
   },
   content: {
     flex: 1,
     padding: 20,
   },
   createButton: {
-    marginBottom: 25,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  createButtonGradient: {
-    paddingVertical: 18,
+    backgroundColor: '#667eea',
+    paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#667eea',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
   createButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   listContainer: {
     paddingBottom: 20,
   },
   questionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 15,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
     borderColor: '#F3F4F6',
@@ -431,9 +348,9 @@ const styles = StyleSheet.create({
   },
   questionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 6,
     lineHeight: 22,
   },
   questionMeta: {
@@ -443,8 +360,8 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 14,
-    color: '#AB75C2',
-    fontWeight: '600',
+    color: '#667eea',
+    fontWeight: '500',
   },
   questionDate: {
     fontSize: 12,
@@ -462,7 +379,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   answerCount: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F3F4F6',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -470,10 +387,10 @@ const styles = StyleSheet.create({
   answerCountText: {
     fontSize: 12,
     color: '#6B7280',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   viewButton: {
-    backgroundColor: '#AB75C2',
+    backgroundColor: '#667eea',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -500,7 +417,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#1F2937',
     marginBottom: 8,
   },
@@ -519,7 +436,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '95%',
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -531,7 +448,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#1F2937',
   },
   closeButton: {
@@ -550,32 +467,18 @@ const styles = StyleSheet.create({
   modalContent: {
     padding: 20,
   },
-  breadcrumb: {
-    marginBottom: 20,
-  },
-  breadcrumbText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  breadcrumbLink: {
-    color: '#AB75C2',
-  },
-  breadcrumbCurrent: {
-    color: '#1F2937',
-    fontWeight: '600',
-  },
   inputGroup: {
     marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#1F2937',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#D1D5DB',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -583,65 +486,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   textArea: {
-    height: 150,
+    height: 120,
     textAlignVertical: 'top',
   },
-  dropdownButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownButtonText: {
-    fontSize: 16,
-    color: '#374151',
-    flex: 1,
-  },
-  placeholderText: {
-    color: '#9CA3AF',
-  },
-  dropdownArrow: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  dropdownArrowUp: {
-    transform: [{ rotate: '180deg' }],
-  },
-  dropdownMenu: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    maxHeight: 200,
-    zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: '#374151',
-  },
   submitButton: {
-    backgroundColor: '#AB75C2',
+    backgroundColor: '#667eea',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -653,6 +502,6 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 }); 
