@@ -1,18 +1,18 @@
-import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import petService, { Pet } from '../services/petService';
+import { Pet } from '../services/petService';
+
+const petService = new (require('../services/petService').default)();
 
 interface HealthRecord {
   id: string;
@@ -51,7 +51,7 @@ const healthCategories: HealthCategory[] = [
   },
   {
     id: 'checkups',
-    title: 'Randevular',
+    title: 'Kontroller',
     icon: '🩺',
     color: '#3B82F6',
     gradientColors: ['#3B82F6', '#1D4ED8'],
@@ -121,37 +121,12 @@ export default function PetProfileScreen() {
       }
       
       const petData = await petService.getPetDetails(petId);
-      if (petData) {
-        setPet(petData);
-      } else {
-        throw new Error('Evcil hayvan bulunamadı');
-      }
+      setPet(petData);
     } catch (err) {
       console.error('Error loading pet:', err);
       setError('Evcil hayvan bilgileri yüklenemedi');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleImagePicker = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0] && pet) {
-        // Here you would normally upload the image and update the pet
-        const newImageUrl = result.assets[0].uri;
-        setPet({...pet, imageUrl: newImageUrl});
-        Alert.alert('Başarılı', 'Profil fotoğrafı güncellendi!');
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Hata', 'Fotoğraf seçilirken bir hata oluştu');
     }
   };
 
@@ -174,25 +149,13 @@ export default function PetProfileScreen() {
     }
   };
 
-  const handleAppointmentPress = () => {
-    if (pet) {
-      router.push(`/appointments?petId=${pet.id}`);
-    }
-  };
-
   const handleCategoryPress = (category: HealthCategory) => {
-    // Update selected category for visual feedback
-    setSelectedCategory(category);
-    
     if (category.id === 'vaccines') {
       // Navigate to vaccination screen for vaccines category
       handleVaccinationPress();
-    } else if (category.id === 'checkups') {
-      // Navigate to appointments screen for checkups category
-      handleAppointmentPress();
     } else {
-      // For other categories, just update selection (can add navigation later)
-      console.log(`Selected category: ${category.title}`);
+      // For other categories, keep the existing behavior
+      setSelectedCategory(category);
     }
   };
 
@@ -209,31 +172,39 @@ export default function PetProfileScreen() {
     return items;
   };
 
-  const renderCategoryButton = (item: HealthCategory) => {
-    const isSelected = selectedCategory.id === item.id;
-    
-    return (
-      <TouchableOpacity
-        style={styles.categoryCard}
-        onPress={() => handleCategoryPress(item)}
-        activeOpacity={0.8}
+  const renderCategoryButton = (item: HealthCategory) => (
+    <TouchableOpacity
+      style={[
+        styles.categoryCard,
+        selectedCategory.id === item.id && styles.selectedCategoryCard
+      ]}
+      onPress={() => handleCategoryPress(item)}
+      activeOpacity={0.8}
+    >
+      <LinearGradient
+        colors={selectedCategory.id === item.id ? item.gradientColors as any : ['#FFFFFF', '#F8FAFC']}
+        style={styles.categoryGradient}
       >
-        <LinearGradient
-          colors={isSelected ? ['#B2DFDB', '#80CBC4'] : ['#FFFFFF', '#F8FAFC']} // Light teal when selected, white when not
-          style={styles.categoryGradient}
-        >
-          <View style={styles.categoryIconContainer}>
-            <Text style={[styles.categoryIcon, { color: isSelected ? '#00695C' : '#6B7280' }]}>
-              {item.icon}
-            </Text>
-          </View>
-          <Text style={[styles.categoryTitle, { color: isSelected ? '#00695C' : '#374151' }]}>
-            {item.title}
+        <View style={styles.categoryIconContainer}>
+          <Text style={[
+            styles.categoryIcon,
+            selectedCategory.id === item.id && styles.selectedCategoryIcon
+          ]}>
+            {item.icon}
           </Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  };
+        </View>
+        <Text style={[
+          styles.categoryTitle,
+          selectedCategory.id === item.id && styles.selectedCategoryTitle
+        ]}>
+          {item.title}
+        </Text>
+        {selectedCategory.id === item.id && (
+          <View style={styles.selectedDot} />
+        )}
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 
   const renderListItem = ({ item, index }: { item: ListItem; index: number }) => {
     switch (item.type) {
@@ -252,10 +223,8 @@ export default function PetProfileScreen() {
               </LinearGradient>
             </TouchableOpacity>
             
-            {/* Centered Profile Section */}
-            <View style={styles.profileContainer}>
-              {/* Profile Image */}
-              <TouchableOpacity onPress={handleImagePicker} style={styles.imageContainer}>
+            <View style={styles.petInfo}>
+              <View style={styles.petImageContainer}>
                 {item.pet.imageUrl ? (
                   <Image source={{ uri: item.pet.imageUrl }} style={styles.petImage} />
                 ) : (
@@ -270,17 +239,11 @@ export default function PetProfileScreen() {
                     </Text>
                   </LinearGradient>
                 )}
-                <View style={styles.editPhotoOverlay}>
-                  <Text style={styles.editPhotoText}>📷</Text>
-                </View>
-              </TouchableOpacity>
+              </View>
               
-              {/* Pet Details */}
-              <View style={styles.petDetailsContainer}>
+              <View style={styles.petDetails}>
                 <Text style={styles.petName}>{item.pet.name}</Text>
                 <Text style={styles.petBreed}>{item.pet.breed}</Text>
-                
-                {/* Age and Gender Info */}
                 <View style={styles.petInfoRow}>
                   <View style={styles.petInfoItem}>
                     <Text style={styles.petInfoIcon}>🎂</Text>
@@ -291,6 +254,10 @@ export default function PetProfileScreen() {
                       {item.pet.gender === 'erkek' ? '♂️' : '♀️'}
                     </Text>
                     <Text style={styles.petInfoText}>{item.pet.gender}</Text>
+                  </View>
+                  <View style={styles.petInfoItem}>
+                    <Text style={styles.petInfoIcon}>🐾</Text>
+                    <Text style={styles.petInfoText}>{item.pet.species}</Text>
                   </View>
                 </View>
               </View>
@@ -303,28 +270,17 @@ export default function PetProfileScreen() {
           <View style={styles.categoriesSection}>
             <Text style={styles.sectionTitle}>🏥 Sağlık Kategorileri</Text>
             
-            {/* First Row - 2 categories */}
-            <View style={styles.categoriesRow}>
-              {healthCategories.slice(0, 2).map((category) => (
-                <View key={category.id} style={styles.categoryWrapper}>
+            <View style={styles.categoriesGrid}>
+              {healthCategories.slice(0, 3).map((category) => (
+                <View key={category.id} style={styles.categoryCardWrapper}>
                   {renderCategoryButton(category)}
                 </View>
               ))}
             </View>
             
-            {/* Second Row - 2 categories */}
-            <View style={styles.categoriesRow}>
-              {healthCategories.slice(2, 4).map((category) => (
-                <View key={category.id} style={styles.categoryWrapper}>
-                  {renderCategoryButton(category)}
-                </View>
-              ))}
-            </View>
-            
-            {/* Third Row - 2 categories */}
-            <View style={styles.categoriesRow}>
-              {healthCategories.slice(4, 6).map((category) => (
-                <View key={category.id} style={styles.categoryWrapper}>
+            <View style={styles.categoriesGrid}>
+              {healthCategories.slice(3, 6).map((category) => (
+                <View key={category.id} style={styles.categoryCardWrapper}>
                   {renderCategoryButton(category)}
                 </View>
               ))}
@@ -361,33 +317,28 @@ export default function PetProfileScreen() {
   }
 
   return (
-    <>
-      {/* Hide the header for this screen */}
-      <Stack.Screen options={{ headerShown: false }} />
-      
-      <View style={styles.container}>
-        <FlatList
-          data={getListData()}
-          renderItem={renderListItem}
-          keyExtractor={(item, index) => `${item.type}-${index}`}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContainer}
-        />
-      </View>
-    </>
+    <View style={styles.container}>
+      <FlatList
+        data={getListData()}
+        renderItem={renderListItem}
+        keyExtractor={(item, index) => `${item.type}-${index}`}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3E8FF', // Light purple/lavender background
+    backgroundColor: '#F9FAFB',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#F9FAFB',
   },
   loadingText: {
     marginTop: 16,
@@ -399,7 +350,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#F9FAFB',
     padding: 20,
   },
   errorText: {
@@ -455,15 +406,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#4B5563',
   },
-  profileContainer: {
+  petInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  imageContainer: {
+  petImageContainer: {
     marginRight: 20,
-    alignItems: 'center',
-    position: 'relative',
   },
   petImage: {
     width: 100,
@@ -484,45 +432,33 @@ const styles = StyleSheet.create({
   petImagePlaceholderText: {
     fontSize: 40,
   },
-  petDetailsContainer: {
+  petDetails: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   petName: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 4,
-    textAlign: 'center',
+    marginBottom: 6,
   },
   petBreed: {
     fontSize: 16,
     color: '#6B7280',
-    marginBottom: 20,
+    marginBottom: 12,
     fontWeight: '600',
-    textAlign: 'center',
   },
   petInfoRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 15,
+    justifyContent: 'space-between',
   },
   petInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 15,
-    minWidth: 80,
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    minWidth: 60,
   },
   petInfoIcon: {
     fontSize: 14,
@@ -536,23 +472,22 @@ const styles = StyleSheet.create({
   categoriesSection: {
     paddingHorizontal: 20,
     paddingBottom: 20,
-    marginTop: 40,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 30,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  categoriesRow: {
+  categoriesGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 15,
   },
-  categoryWrapper: {
-    width: '48%',
+  categoryCardWrapper: {
+    flex: 1,
+    marginHorizontal: 5,
   },
   categoryCard: {
     borderRadius: 16,
@@ -562,39 +497,43 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  selectedCategoryCard: {
+    transform: [{ scale: 1.05 }],
+  },
   categoryGradient: {
-    padding: 20,
+    padding: 16,
     borderRadius: 16,
     alignItems: 'center',
+    minHeight: 90,
     justifyContent: 'center',
-    minHeight: 100,
+    position: 'relative',
   },
   categoryIconContainer: {
     marginBottom: 8,
   },
   categoryIcon: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  selectedCategoryIcon: {
+    fontSize: 26,
   },
   categoryTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
+    color: '#4B5563',
     textAlign: 'center',
+    lineHeight: 14,
   },
-  editPhotoOverlay: {
+  selectedCategoryTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+  },
+  selectedDot: {
     position: 'absolute',
-    bottom: -5,
-    right: -5,
-    backgroundColor: '#AB75C2',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  editPhotoText: {
-    fontSize: 14,
-    color: 'white',
+    bottom: 8,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
   },
 }); 

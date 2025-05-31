@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Alert,
     Dimensions,
+    FlatList,
     Image,
     Modal,
     ScrollView,
@@ -448,14 +449,13 @@ export default function ProfileScreen() {
         return (
           <View style={styles.tabContentContainer}>
             {userListings.length > 0 ? (
-              <View>
-                {userListings.map((item, index) => (
-                  <View key={`${item.type}_${item.id}_${index}`}>
-                    {renderListingItem({ item })}
-                    {index < userListings.length - 1 && <View style={{ height: 15 }} />}
-                  </View>
-                ))}
-              </View>
+              <FlatList
+                data={userListings}
+                renderItem={renderListingItem}
+                keyExtractor={(item, index) => `${item.type}_${item.id}_${index}`}
+                showsVerticalScrollIndicator={false}
+                ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
+              />
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateIcon}>📝</Text>
@@ -494,14 +494,13 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 </View>
                 
-                <View>
-                  {userPets.map((item, index) => (
-                    <View key={item.id}>
-                      {renderPetCard({ item })}
-                      {index < userPets.length - 1 && <View style={{ height: 15 }} />}
-                    </View>
-                  ))}
-                </View>
+                <FlatList
+                  data={userPets}
+                  renderItem={renderPetCard}
+                  keyExtractor={(item) => item.id}
+                  showsVerticalScrollIndicator={false}
+                  ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
+                />
               </>
             ) : (
               <View style={styles.emptyState}>

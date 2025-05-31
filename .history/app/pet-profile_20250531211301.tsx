@@ -51,7 +51,7 @@ const healthCategories: HealthCategory[] = [
   },
   {
     id: 'checkups',
-    title: 'Randevular',
+    title: 'Kontroller',
     icon: '🩺',
     color: '#3B82F6',
     gradientColors: ['#3B82F6', '#1D4ED8'],
@@ -174,12 +174,6 @@ export default function PetProfileScreen() {
     }
   };
 
-  const handleAppointmentPress = () => {
-    if (pet) {
-      router.push(`/appointments?petId=${pet.id}`);
-    }
-  };
-
   const handleCategoryPress = (category: HealthCategory) => {
     // Update selected category for visual feedback
     setSelectedCategory(category);
@@ -187,9 +181,6 @@ export default function PetProfileScreen() {
     if (category.id === 'vaccines') {
       // Navigate to vaccination screen for vaccines category
       handleVaccinationPress();
-    } else if (category.id === 'checkups') {
-      // Navigate to appointments screen for checkups category
-      handleAppointmentPress();
     } else {
       // For other categories, just update selection (can add navigation later)
       console.log(`Selected category: ${category.title}`);
@@ -463,7 +454,6 @@ const styles = StyleSheet.create({
   imageContainer: {
     marginRight: 20,
     alignItems: 'center',
-    position: 'relative',
   },
   petImage: {
     width: 100,
@@ -487,19 +477,19 @@ const styles = StyleSheet.create({
   petDetailsContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   petName: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1F2937',
+    marginTop: 12,
     marginBottom: 4,
     textAlign: 'center',
   },
   petBreed: {
     fontSize: 16,
     color: '#6B7280',
-    marginBottom: 20,
+    marginBottom: 24,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -507,22 +497,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 15,
+    gap: 12,
+    flexWrap: 'wrap',
   },
   petInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 15,
-    minWidth: 80,
+    borderRadius: 12,
+    minWidth: 75,
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   petInfoIcon: {
     fontSize: 14,
@@ -582,19 +568,18 @@ const styles = StyleSheet.create({
   },
   editPhotoOverlay: {
     position: 'absolute',
-    bottom: -5,
-    right: -5,
-    backgroundColor: '#AB75C2',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
   },
   editPhotoText: {
-    fontSize: 14,
+    fontSize: 24,
+    fontWeight: 'bold',
     color: 'white',
   },
 }); 

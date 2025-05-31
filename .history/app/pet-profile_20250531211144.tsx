@@ -1,10 +1,8 @@
-import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -51,7 +49,7 @@ const healthCategories: HealthCategory[] = [
   },
   {
     id: 'checkups',
-    title: 'Randevular',
+    title: 'Kontroller',
     icon: '🩺',
     color: '#3B82F6',
     gradientColors: ['#3B82F6', '#1D4ED8'],
@@ -134,27 +132,6 @@ export default function PetProfileScreen() {
     }
   };
 
-  const handleImagePicker = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0] && pet) {
-        // Here you would normally upload the image and update the pet
-        const newImageUrl = result.assets[0].uri;
-        setPet({...pet, imageUrl: newImageUrl});
-        Alert.alert('Başarılı', 'Profil fotoğrafı güncellendi!');
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Hata', 'Fotoğraf seçilirken bir hata oluştu');
-    }
-  };
-
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -174,12 +151,6 @@ export default function PetProfileScreen() {
     }
   };
 
-  const handleAppointmentPress = () => {
-    if (pet) {
-      router.push(`/appointments?petId=${pet.id}`);
-    }
-  };
-
   const handleCategoryPress = (category: HealthCategory) => {
     // Update selected category for visual feedback
     setSelectedCategory(category);
@@ -187,9 +158,6 @@ export default function PetProfileScreen() {
     if (category.id === 'vaccines') {
       // Navigate to vaccination screen for vaccines category
       handleVaccinationPress();
-    } else if (category.id === 'checkups') {
-      // Navigate to appointments screen for checkups category
-      handleAppointmentPress();
     } else {
       // For other categories, just update selection (can add navigation later)
       console.log(`Selected category: ${category.title}`);
@@ -252,10 +220,8 @@ export default function PetProfileScreen() {
               </LinearGradient>
             </TouchableOpacity>
             
-            {/* Centered Profile Section */}
-            <View style={styles.profileContainer}>
-              {/* Profile Image */}
-              <TouchableOpacity onPress={handleImagePicker} style={styles.imageContainer}>
+            <View style={styles.petInfo}>
+              <View style={styles.petImageContainer}>
                 {item.pet.imageUrl ? (
                   <Image source={{ uri: item.pet.imageUrl }} style={styles.petImage} />
                 ) : (
@@ -270,17 +236,11 @@ export default function PetProfileScreen() {
                     </Text>
                   </LinearGradient>
                 )}
-                <View style={styles.editPhotoOverlay}>
-                  <Text style={styles.editPhotoText}>📷</Text>
-                </View>
-              </TouchableOpacity>
+              </View>
               
-              {/* Pet Details */}
-              <View style={styles.petDetailsContainer}>
+              <View style={styles.petDetails}>
                 <Text style={styles.petName}>{item.pet.name}</Text>
                 <Text style={styles.petBreed}>{item.pet.breed}</Text>
-                
-                {/* Age and Gender Info */}
                 <View style={styles.petInfoRow}>
                   <View style={styles.petInfoItem}>
                     <Text style={styles.petInfoIcon}>🎂</Text>
@@ -455,15 +415,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#4B5563',
   },
-  profileContainer: {
+  petInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imageContainer: {
+  petImageContainer: {
     marginRight: 20,
     alignItems: 'center',
-    position: 'relative',
   },
   petImage: {
     width: 100,
@@ -484,22 +443,22 @@ const styles = StyleSheet.create({
   petImagePlaceholderText: {
     fontSize: 40,
   },
-  petDetailsContainer: {
+  petDetails: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   petName: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1F2937',
+    marginTop: 12,
     marginBottom: 4,
     textAlign: 'center',
   },
   petBreed: {
     fontSize: 16,
     color: '#6B7280',
-    marginBottom: 20,
+    marginBottom: 24,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -507,22 +466,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 15,
+    gap: 12,
+    flexWrap: 'wrap',
   },
   petInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 15,
-    minWidth: 80,
+    borderRadius: 12,
+    minWidth: 75,
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   petInfoIcon: {
     fontSize: 14,
@@ -579,22 +534,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  editPhotoOverlay: {
-    position: 'absolute',
-    bottom: -5,
-    right: -5,
-    backgroundColor: '#AB75C2',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  editPhotoText: {
-    fontSize: 14,
-    color: 'white',
   },
 }); 

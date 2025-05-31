@@ -174,12 +174,6 @@ export default function PetProfileScreen() {
     }
   };
 
-  const handleAppointmentPress = () => {
-    if (pet) {
-      router.push(`/appointments?petId=${pet.id}`);
-    }
-  };
-
   const handleCategoryPress = (category: HealthCategory) => {
     // Update selected category for visual feedback
     setSelectedCategory(category);
@@ -187,9 +181,6 @@ export default function PetProfileScreen() {
     if (category.id === 'vaccines') {
       // Navigate to vaccination screen for vaccines category
       handleVaccinationPress();
-    } else if (category.id === 'checkups') {
-      // Navigate to appointments screen for checkups category
-      handleAppointmentPress();
     } else {
       // For other categories, just update selection (can add navigation later)
       console.log(`Selected category: ${category.title}`);
