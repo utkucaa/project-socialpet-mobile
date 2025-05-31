@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -53,6 +53,7 @@ const tabs: TabContent[] = [
 ];
 
 export default function ProfileScreen() {
+  const params = useLocalSearchParams();
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('listings');
@@ -74,7 +75,7 @@ export default function ProfileScreen() {
   const [petName, setPetName] = useState('');
   const [petAge, setPetAge] = useState('');
   const [petGender, setPetGender] = useState<'erkek' | 'dişi'>('erkek');
-  const [petSpecies, setPetSpecies] = useState('');
+  const [petSpecies, setPetSpecies] = useState('köpek');
   const [petBreed, setPetBreed] = useState('');
   const [petImageUri, setPetImageUri] = useState<string | null>(null);
 
@@ -84,7 +85,7 @@ export default function ProfileScreen() {
   const [showBreedDropdown, setShowBreedDropdown] = useState(false);
 
   // Computed values
-  const availableBreeds = (petSpecies && ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES]) || [];
+  const availableBreeds = ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES] || [];
 
   // const router = useRouter();
 
@@ -99,6 +100,13 @@ export default function ProfileScreen() {
     }
   }, [userData]);
 
+  // URL parametresi ile tab değişimi
+  useEffect(() => {
+    if (params.tab) {
+      setActiveTab(params.tab as string);
+    }
+  }, [params.tab]);
+
   // Focus effect to reload pets when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -110,12 +118,10 @@ export default function ProfileScreen() {
 
   // Set initial breed when species changes
   useEffect(() => {
-    if (availableBreeds && Array.isArray(availableBreeds) && availableBreeds.length > 0) {
+    if (availableBreeds.length > 0) {
       setPetBreed(availableBreeds[0]);
-    } else {
-      setPetBreed('');
     }
-  }, [petSpecies]);
+  }, [petSpecies, availableBreeds]);
 
   const loadUserData = async () => {
     try {
@@ -234,13 +240,9 @@ export default function ProfileScreen() {
     setPetName('');
     setPetAge('');
     setPetGender('erkek');
-    setPetSpecies('');
-    setPetBreed(''); // Start empty since no species selected
+    setPetSpecies('köpek');
+    setPetBreed('');
     setPetImageUri(null);
-    // Close all dropdowns
-    setShowGenderDropdown(false);
-    setShowSpeciesDropdown(false);
-    setShowBreedDropdown(false);
   };
 
   const closeModal = () => {
@@ -275,11 +277,6 @@ export default function ProfileScreen() {
   const selectSpecies = (species: string) => {
     setPetSpecies(species);
     setShowSpeciesDropdown(false);
-    // Set first breed of selected species
-    const speciesBreeds = ANIMAL_SPECIES[species as keyof typeof ANIMAL_SPECIES];
-    if (speciesBreeds && speciesBreeds.length > 0) {
-      setPetBreed(speciesBreeds[0]);
-    }
   };
 
   const selectBreed = (breed: string) => {
@@ -324,16 +321,6 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (!petSpecies.trim()) {
-      Alert.alert('Hata', 'Lütfen hayvan türünü seçin.');
-      return;
-    }
-
-    if (!petBreed.trim()) {
-      Alert.alert('Hata', 'Lütfen cinsi seçin.');
-      return;
-    }
-
     if (!userData) {
       Alert.alert('Hata', 'Kullanıcı bilgileri bulunamadı.');
       return;
@@ -354,6 +341,11 @@ export default function ProfileScreen() {
 
       await petService.addPet(petData);
       
+      // Evcil hayvanları yeniden yükle
+      await loadUserPets();
+      
+      // Form'u kapat
+      closeModal();
       
       // Evcil hayvanlar sekmesine geç
       setActiveTab('pets');
@@ -367,6 +359,12 @@ export default function ProfileScreen() {
       setModalLoading(false);
     }
   };
+
+  // Tür değiştiğinde cinsi güncelle
+  React.useEffect(() => {
+    const availableBreeds = ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES];
+    setPetBreed(availableBreeds[0]);
+  }, [petSpecies]);
 
   const handlePetPress = (pet: Pet) => {
     // router.push(`/pet-profile?petId=${pet.id}`);
@@ -645,7 +643,7 @@ export default function ProfileScreen() {
                         onPress={toggleSpeciesDropdown}
                       >
                         <Text style={styles.modalDropdownText}>
-                          {petSpecies ? petSpecies.charAt(0).toUpperCase() + petSpecies.slice(1) : 'Hayvan türü seçiniz'}
+                          {petSpecies.charAt(0).toUpperCase() + petSpecies.slice(1)}
                         </Text>
                         <Text style={[styles.modalDropdownArrow, showSpeciesDropdown && styles.modalDropdownArrowUp]}>▼</Text>
                       </TouchableOpacity>
@@ -673,17 +671,16 @@ export default function ProfileScreen() {
                     <Text style={styles.modalLabel}>Cinsi *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 
-                        style={[styles.modalCustomDropdown, !petSpecies && styles.modalDropdownDisabled]}
-                        onPress={petSpecies ? toggleBreedDropdown : undefined}
-                        disabled={!petSpecies}
+                        style={styles.modalCustomDropdown} 
+                        onPress={toggleBreedDropdown}
                       >
-                        <Text style={[styles.modalDropdownText, !petSpecies && styles.modalDropdownTextDisabled]}>
-                          {!petSpecies ? 'Önce hayvan türünü seçin' : (petBreed || 'Cinsi seçin')}
+                        <Text style={styles.modalDropdownText}>
+                          {petBreed || 'Cinsi seçin'}
                         </Text>
                         <Text style={[styles.modalDropdownArrow, showBreedDropdown && styles.modalDropdownArrowUp]}>▼</Text>
                       </TouchableOpacity>
                       
-                      {showBreedDropdown && petSpecies && (
+                      {showBreedDropdown && (
                         <View style={styles.modalDropdownMenu}>
                           {availableBreeds.map((breedItem: string) => (
                             <TouchableOpacity 
@@ -1345,57 +1342,44 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   modalDropdownContainer: {
-    position: 'relative',
-    zIndex: 1000,
-  },
-  modalCustomDropdown: {
-    backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#D1D5DB',
     borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    overflow: 'hidden',
+    height: 50,
+    justifyContent: 'center',
+  },
+  modalCustomDropdown: {
+    flex: 1,
     padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   modalDropdownText: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#374151',
   },
-  modalDropdownTextDisabled: {
-    color: '#9CA3AF',
-  },
   modalDropdownArrow: {
-    fontSize: 12,
-    color: '#6B7280',
+    marginLeft: 10,
   },
   modalDropdownArrowUp: {
     transform: [{ rotate: '180deg' }],
   },
   modalDropdownMenu: {
     position: 'absolute',
-    top: '100%',
+    top: 50,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 8,
-    zIndex: 1001,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    overflow: 'hidden',
   },
   modalDropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+    padding: 15,
   },
   modalDropdownItemText: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#374151',
   },
   modalSubmitButton: {
@@ -1415,9 +1399,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  modalDropdownDisabled: {
-    opacity: 0.5,
-    backgroundColor: '#F3F4F6',
   },
 }); 

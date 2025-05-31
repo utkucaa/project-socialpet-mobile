@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -9,7 +10,7 @@ import {
     Dimensions,
     FlatList,
     Image,
-    Modal,
+    KeyboardAvoidingView, Modal, Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -53,6 +54,7 @@ const tabs: TabContent[] = [
 ];
 
 export default function ProfileScreen() {
+  const params = useLocalSearchParams();
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('listings');
@@ -74,19 +76,9 @@ export default function ProfileScreen() {
   const [petName, setPetName] = useState('');
   const [petAge, setPetAge] = useState('');
   const [petGender, setPetGender] = useState<'erkek' | 'dişi'>('erkek');
-  const [petSpecies, setPetSpecies] = useState('');
+  const [petSpecies, setPetSpecies] = useState('köpek');
   const [petBreed, setPetBreed] = useState('');
   const [petImageUri, setPetImageUri] = useState<string | null>(null);
-
-  // Dropdown states
-  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
-  const [showSpeciesDropdown, setShowSpeciesDropdown] = useState(false);
-  const [showBreedDropdown, setShowBreedDropdown] = useState(false);
-
-  // Computed values
-  const availableBreeds = (petSpecies && ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES]) || [];
-
-  // const router = useRouter();
 
   useEffect(() => {
     loadUserData();
@@ -99,6 +91,13 @@ export default function ProfileScreen() {
     }
   }, [userData]);
 
+  // URL parametresi ile tab değişimi
+  useEffect(() => {
+    if (params.tab) {
+      setActiveTab(params.tab as string);
+    }
+  }, [params.tab]);
+
   // Focus effect to reload pets when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -107,15 +106,6 @@ export default function ProfileScreen() {
       }
     }, [userData, activeTab])
   );
-
-  // Set initial breed when species changes
-  useEffect(() => {
-    if (availableBreeds && Array.isArray(availableBreeds) && availableBreeds.length > 0) {
-      setPetBreed(availableBreeds[0]);
-    } else {
-      setPetBreed('');
-    }
-  }, [petSpecies]);
 
   const loadUserData = async () => {
     try {
@@ -201,8 +191,7 @@ export default function ProfileScreen() {
     try {
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
-      // router.replace('/login');
-      Alert.alert('Çıkış', 'Çıkış işlemi tamamlandı');
+      router.replace('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -224,67 +213,22 @@ export default function ProfileScreen() {
   };
 
   const handleAddPet = () => {
-    console.log('handleAddPet called');
     resetForm();
     setShowAddPetModal(true);
-    console.log('Modal should be open:', true);
   };
 
   const resetForm = () => {
     setPetName('');
     setPetAge('');
     setPetGender('erkek');
-    setPetSpecies('');
-    setPetBreed(''); // Start empty since no species selected
+    setPetSpecies('köpek');
+    setPetBreed('');
     setPetImageUri(null);
-    // Close all dropdowns
-    setShowGenderDropdown(false);
-    setShowSpeciesDropdown(false);
-    setShowBreedDropdown(false);
   };
 
   const closeModal = () => {
     setShowAddPetModal(false);
     resetForm();
-  };
-
-  // Dropdown handlers
-  const toggleGenderDropdown = () => {
-    setShowGenderDropdown(!showGenderDropdown);
-    setShowSpeciesDropdown(false);
-    setShowBreedDropdown(false);
-  };
-
-  const toggleSpeciesDropdown = () => {
-    setShowSpeciesDropdown(!showSpeciesDropdown);
-    setShowGenderDropdown(false);
-    setShowBreedDropdown(false);
-  };
-
-  const toggleBreedDropdown = () => {
-    setShowBreedDropdown(!showBreedDropdown);
-    setShowGenderDropdown(false);
-    setShowSpeciesDropdown(false);
-  };
-
-  const selectGender = (gender: 'erkek' | 'dişi') => {
-    setPetGender(gender);
-    setShowGenderDropdown(false);
-  };
-
-  const selectSpecies = (species: string) => {
-    setPetSpecies(species);
-    setShowSpeciesDropdown(false);
-    // Set first breed of selected species
-    const speciesBreeds = ANIMAL_SPECIES[species as keyof typeof ANIMAL_SPECIES];
-    if (speciesBreeds && speciesBreeds.length > 0) {
-      setPetBreed(speciesBreeds[0]);
-    }
-  };
-
-  const selectBreed = (breed: string) => {
-    setPetBreed(breed);
-    setShowBreedDropdown(false);
   };
 
   const pickImage = async () => {
@@ -324,16 +268,6 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (!petSpecies.trim()) {
-      Alert.alert('Hata', 'Lütfen hayvan türünü seçin.');
-      return;
-    }
-
-    if (!petBreed.trim()) {
-      Alert.alert('Hata', 'Lütfen cinsi seçin.');
-      return;
-    }
-
     if (!userData) {
       Alert.alert('Hata', 'Kullanıcı bilgileri bulunamadı.');
       return;
@@ -354,6 +288,11 @@ export default function ProfileScreen() {
 
       await petService.addPet(petData);
       
+      // Evcil hayvanları yeniden yükle
+      await loadUserPets();
+      
+      // Form'u kapat
+      closeModal();
       
       // Evcil hayvanlar sekmesine geç
       setActiveTab('pets');
@@ -368,9 +307,16 @@ export default function ProfileScreen() {
     }
   };
 
+  // Tür değiştiğinde cinsi güncelle
+  React.useEffect(() => {
+    const availableBreeds = ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES];
+    setPetBreed(availableBreeds[0]);
+  }, [petSpecies]);
+
+  const availableBreeds = ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES] || [];
+
   const handlePetPress = (pet: Pet) => {
-    // router.push(`/pet-profile?petId=${pet.id}`);
-    Alert.alert('Pet Profile', `${pet.name} profili yakında açılacak`);
+    router.push(`/pet-profile?petId=${pet.id}`);
   };
 
   const renderListingItem = ({ item }: { item: any }) => (
@@ -464,7 +410,7 @@ export default function ProfileScreen() {
                 </Text>
                 <TouchableOpacity 
                   style={styles.createListingButton}
-                  onPress={() => Alert.alert('İlan Oluştur', 'Bu özellik yakında eklenecek')}
+                  onPress={() => router.push('/(tabs)/adopt')}
                 >
                   <Text style={styles.createListingButtonText}>İlan Oluştur</Text>
                 </TouchableOpacity>
@@ -537,195 +483,151 @@ export default function ProfileScreen() {
     }
   };
 
-  const renderAddPetModal = () => {
-    console.log('renderAddPetModal called, showAddPetModal:', showAddPetModal);
-    
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={showAddPetModal}
-        onRequestClose={closeModal}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              {/* Modal Header */}
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Yeni Evcil Hayvan Ekle</Text>
-                <TouchableOpacity 
-                  style={styles.closeButton}
-                  onPress={closeModal}
-                >
-                  <Text style={styles.closeButtonText}>✕</Text>
+  const renderAddPetModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showAddPetModal}
+      onRequestClose={closeModal}
+    >
+      <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Yeni Evcil Hayvan Ekle</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={closeModal}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
+              {/* Photo Section */}
+              <View style={styles.modalPhotoSection}>
+                <TouchableOpacity style={styles.modalPhotoButton} onPress={pickImage}>
+                  {petImageUri ? (
+                    <Image source={{ uri: petImageUri }} style={styles.modalPetPhoto} />
+                  ) : (
+                    <View style={styles.modalPhotoPlaceholder}>
+                      <Text style={styles.modalPhotoPlaceholderIcon}>📷</Text>
+                      <Text style={styles.modalPhotoPlaceholderText}>Fotoğraf Ekle</Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
-                {/* Photo Section */}
-                <View style={styles.modalPhotoSection}>
-                  <TouchableOpacity style={styles.modalPhotoButton} onPress={pickImage}>
-                    {petImageUri ? (
-                      <Image source={{ uri: petImageUri }} style={styles.modalPetPhoto} />
-                    ) : (
-                      <View style={styles.modalPhotoPlaceholder}>
-                        <Text style={styles.modalPhotoPlaceholderIcon}>📷</Text>
-                        <Text style={styles.modalPhotoPlaceholderText}>Fotoğraf Ekle</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
+              {/* Form Fields */}
+              <View style={styles.modalFormSection}>
+                {/* Name */}
+                <View style={styles.modalInputGroup}>
+                  <Text style={styles.modalLabel}>Hayvan İsmi *</Text>
+                  <TextInput
+                    style={styles.modalTextInput}
+                    value={petName}
+                    onChangeText={setPetName}
+                    placeholder="Örn: Karamel, Boncuk, Şeker..."
+                    placeholderTextColor="#9CA3AF"
+                  />
                 </View>
 
-                {/* Form Fields */}
-                <View style={styles.modalFormSection}>
-                  {/* Name */}
-                  <View style={styles.modalInputGroup}>
-                    <Text style={styles.modalLabel}>Hayvan İsmi *</Text>
-                    <TextInput
-                      style={styles.modalTextInput}
-                      value={petName}
-                      onChangeText={setPetName}
-                      placeholder="Örn: Karamel, Boncuk, Şeker..."
-                      placeholderTextColor="#9CA3AF"
-                    />
-                  </View>
+                {/* Age */}
+                <View style={styles.modalInputGroup}>
+                  <Text style={styles.modalLabel}>Yaş *</Text>
+                  <TextInput
+                    style={styles.modalTextInput}
+                    value={petAge}
+                    onChangeText={setPetAge}
+                    placeholder="Yaş (sayı olarak)"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                  />
+                </View>
 
-                  {/* Age */}
-                  <View style={styles.modalInputGroup}>
-                    <Text style={styles.modalLabel}>Yaş *</Text>
-                    <TextInput
-                      style={styles.modalTextInput}
-                      value={petAge}
-                      onChangeText={setPetAge}
-                      placeholder="Yaş (sayı olarak)"
-                      placeholderTextColor="#9CA3AF"
-                      keyboardType="numeric"
-                    />
-                  </View>
-
-                  {/* Gender */}
-                  <View style={styles.modalInputGroup}>
-                    <Text style={styles.modalLabel}>Cinsiyet *</Text>
-                    <View style={styles.modalDropdownContainer}>
-                      <TouchableOpacity 
-                        style={styles.modalCustomDropdown} 
-                        onPress={toggleGenderDropdown}
-                      >
-                        <Text style={styles.modalDropdownText}>
-                          {petGender === 'erkek' ? 'Erkek' : 'Dişi'}
-                        </Text>
-                        <Text style={[styles.modalDropdownArrow, showGenderDropdown && styles.modalDropdownArrowUp]}>▼</Text>
-                      </TouchableOpacity>
-                      
-                      {showGenderDropdown && (
-                        <View style={styles.modalDropdownMenu}>
-                          <TouchableOpacity 
-                            style={styles.modalDropdownItem} 
-                            onPress={() => selectGender('erkek')}
-                          >
-                            <Text style={styles.modalDropdownItemText}>Erkek</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            style={styles.modalDropdownItem} 
-                            onPress={() => selectGender('dişi')}
-                          >
-                            <Text style={styles.modalDropdownItemText}>Dişi</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Species */}
-                  <View style={styles.modalInputGroup}>
-                    <Text style={styles.modalLabel}>Hayvan Türü *</Text>
-                    <View style={styles.modalDropdownContainer}>
-                      <TouchableOpacity 
-                        style={styles.modalCustomDropdown} 
-                        onPress={toggleSpeciesDropdown}
-                      >
-                        <Text style={styles.modalDropdownText}>
-                          {petSpecies ? petSpecies.charAt(0).toUpperCase() + petSpecies.slice(1) : 'Hayvan türü seçiniz'}
-                        </Text>
-                        <Text style={[styles.modalDropdownArrow, showSpeciesDropdown && styles.modalDropdownArrowUp]}>▼</Text>
-                      </TouchableOpacity>
-                      
-                      {showSpeciesDropdown && (
-                        <View style={styles.modalDropdownMenu}>
-                          {Object.keys(ANIMAL_SPECIES).map((speciesKey) => (
-                            <TouchableOpacity 
-                              key={speciesKey}
-                              style={styles.modalDropdownItem} 
-                              onPress={() => selectSpecies(speciesKey)}
-                            >
-                              <Text style={styles.modalDropdownItemText}>
-                                {speciesKey.charAt(0).toUpperCase() + speciesKey.slice(1)}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Breed */}
-                  <View style={styles.modalInputGroup}>
-                    <Text style={styles.modalLabel}>Cinsi *</Text>
-                    <View style={styles.modalDropdownContainer}>
-                      <TouchableOpacity 
-                        style={[styles.modalCustomDropdown, !petSpecies && styles.modalDropdownDisabled]}
-                        onPress={petSpecies ? toggleBreedDropdown : undefined}
-                        disabled={!petSpecies}
-                      >
-                        <Text style={[styles.modalDropdownText, !petSpecies && styles.modalDropdownTextDisabled]}>
-                          {!petSpecies ? 'Önce hayvan türünü seçin' : (petBreed || 'Cinsi seçin')}
-                        </Text>
-                        <Text style={[styles.modalDropdownArrow, showBreedDropdown && styles.modalDropdownArrowUp]}>▼</Text>
-                      </TouchableOpacity>
-                      
-                      {showBreedDropdown && petSpecies && (
-                        <View style={styles.modalDropdownMenu}>
-                          {availableBreeds.map((breedItem: string) => (
-                            <TouchableOpacity 
-                              key={breedItem}
-                              style={styles.modalDropdownItem} 
-                              onPress={() => selectBreed(breedItem)}
-                            >
-                              <Text style={styles.modalDropdownItemText}>{breedItem}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      )}
-                    </View>
+                {/* Gender */}
+                <View style={styles.modalInputGroup}>
+                  <Text style={styles.modalLabel}>Cinsiyet *</Text>
+                  <View style={styles.modalPickerContainer}>
+                    <Picker
+                      selectedValue={petGender}
+                      onValueChange={setPetGender}
+                      style={styles.modalPicker}
+                    >
+                      <Picker.Item label="Erkek" value="erkek" />
+                      <Picker.Item label="Dişi" value="dişi" />
+                    </Picker>
                   </View>
                 </View>
 
-                {/* Submit Button */}
-                <TouchableOpacity 
-                  style={[styles.modalSubmitButton, modalLoading && styles.modalSubmitButtonDisabled]}
-                  onPress={handleSubmitPet}
-                  disabled={modalLoading}
+                {/* Species */}
+                <View style={styles.modalInputGroup}>
+                  <Text style={styles.modalLabel}>Hayvan Türü *</Text>
+                  <View style={styles.modalPickerContainer}>
+                    <Picker
+                      selectedValue={petSpecies}
+                      onValueChange={setPetSpecies}
+                      style={styles.modalPicker}
+                    >
+                      {Object.keys(ANIMAL_SPECIES).map((speciesKey) => (
+                        <Picker.Item 
+                          key={speciesKey} 
+                          label={speciesKey.charAt(0).toUpperCase() + speciesKey.slice(1)} 
+                          value={speciesKey} 
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+
+                {/* Breed */}
+                <View style={styles.modalInputGroup}>
+                  <Text style={styles.modalLabel}>Cinsi *</Text>
+                  <View style={styles.modalPickerContainer}>
+                    <Picker
+                      selectedValue={petBreed}
+                      onValueChange={setPetBreed}
+                      style={styles.modalPicker}
+                    >
+                      {availableBreeds.map((breedItem: string) => (
+                        <Picker.Item 
+                          key={breedItem} 
+                          label={breedItem} 
+                          value={breedItem} 
+                        />
+                      ))}
+                    </Picker>
+                  </View>
+                </View>
+              </View>
+
+              {/* Submit Button */}
+              <TouchableOpacity 
+                style={[styles.modalSubmitButton, modalLoading && styles.modalSubmitButtonDisabled]}
+                onPress={handleSubmitPet}
+                disabled={modalLoading}
+              >
+                <LinearGradient
+                  colors={modalLoading ? ['#9CA3AF', '#6B7280'] : ['#AB75C2', '#9B6BB0']}
+                  style={styles.modalSubmitButtonGradient}
                 >
-                  <LinearGradient
-                    colors={modalLoading ? ['#9CA3AF', '#6B7280'] : ['#AB75C2', '#9B6BB0']}
-                    style={styles.modalSubmitButtonGradient}
-                  >
-                    {modalLoading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <Text style={styles.modalSubmitButtonText}>🐾 Evcil Hayvan Ekle</Text>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-                
-                <View style={{ height: 20 }} />
-              </ScrollView>
-            </View>
+                  {modalLoading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.modalSubmitButtonText}>🐾 Evcil Hayvan Ekle</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-        </View>
-      </Modal>
-    );
-  };
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
+  );
 
   if (loading) {
     return (
@@ -1242,21 +1144,18 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    maxHeight: '85%',
-    height: '80%',
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    overflow: 'hidden',
-    flex: 1,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1265,7 +1164,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
   },
   modalTitle: {
     fontSize: 20,
@@ -1287,7 +1185,6 @@ const styles = StyleSheet.create({
   },
   modalScrollView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   modalPhotoSection: {
     alignItems: 'center',
@@ -1344,58 +1241,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     color: '#374151',
   },
-  modalDropdownContainer: {
-    position: 'relative',
-    zIndex: 1000,
-  },
-  modalCustomDropdown: {
-    backgroundColor: '#F9FAFB',
+  modalPickerContainer: {
     borderWidth: 1,
     borderColor: '#D1D5DB',
     borderRadius: 12,
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    overflow: 'hidden',
   },
-  modalDropdownText: {
-    fontSize: 16,
-    color: '#374151',
-  },
-  modalDropdownTextDisabled: {
-    color: '#9CA3AF',
-  },
-  modalDropdownArrow: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  modalDropdownArrowUp: {
-    transform: [{ rotate: '180deg' }],
-  },
-  modalDropdownMenu: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 8,
-    zIndex: 1001,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  modalDropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  modalDropdownItemText: {
-    fontSize: 16,
+  modalPicker: {
     color: '#374151',
   },
   modalSubmitButton: {
@@ -1415,9 +1268,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  modalDropdownDisabled: {
-    opacity: 0.5,
-    backgroundColor: '#F3F4F6',
   },
 }); 

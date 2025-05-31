@@ -84,7 +84,9 @@ export default function ProfileScreen() {
   const [showBreedDropdown, setShowBreedDropdown] = useState(false);
 
   // Computed values
-  const availableBreeds = (petSpecies && ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES]) || [];
+  const availableBreeds = petSpecies && ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES] 
+    ? ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES] 
+    : [];
 
   // const router = useRouter();
 
@@ -99,6 +101,13 @@ export default function ProfileScreen() {
     }
   }, [userData]);
 
+  // URL parametresi ile tab değişimi
+  useEffect(() => {
+    if (params && params.tab && typeof params.tab === 'string') {
+      setActiveTab(params.tab);
+    }
+  }, [params]);
+
   // Focus effect to reload pets when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -110,10 +119,8 @@ export default function ProfileScreen() {
 
   // Set initial breed when species changes
   useEffect(() => {
-    if (availableBreeds && Array.isArray(availableBreeds) && availableBreeds.length > 0) {
+    if (availableBreeds && availableBreeds.length > 0) {
       setPetBreed(availableBreeds[0]);
-    } else {
-      setPetBreed('');
     }
   }, [petSpecies]);
 
@@ -367,6 +374,12 @@ export default function ProfileScreen() {
       setModalLoading(false);
     }
   };
+
+  // Tür değiştiğinde cinsi güncelle
+  React.useEffect(() => {
+    const availableBreeds = ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES];
+    setPetBreed(availableBreeds[0]);
+  }, [petSpecies]);
 
   const handlePetPress = (pet: Pet) => {
     // router.push(`/pet-profile?petId=${pet.id}`);

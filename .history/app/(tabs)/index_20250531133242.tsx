@@ -581,6 +581,7 @@ const styles = StyleSheet.create({
   },
   healthTrackingCard: {
     marginTop: 20,
+    padding: 10,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -590,42 +591,39 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   healthTrackingGradient: {
-    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
   },
   healthTrackingContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
   },
   healthTrackingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   healthTrackingIcon: {
-    fontSize: 32,
-    marginRight: 15,
+    fontSize: 24,
+    marginRight: 10,
   },
   healthTrackingTextContainer: {
-    flex: 1,
+    flexDirection: 'column',
   },
   healthTrackingTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   healthTrackingDescription: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#FFFFFF',
-    lineHeight: 18,
-    opacity: 0.9,
+    lineHeight: 16,
   },
   healthTrackingArrow: {
-    fontSize: 20,
+    fontSize: 16,
     color: '#FFFFFF',
     fontWeight: 'bold',
-    marginLeft: 10,
   },
 });

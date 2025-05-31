@@ -368,6 +368,12 @@ export default function ProfileScreen() {
     }
   };
 
+  // Tür değiştiğinde cinsi güncelle
+  React.useEffect(() => {
+    const availableBreeds = ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES];
+    setPetBreed(availableBreeds[0]);
+  }, [petSpecies]);
+
   const handlePetPress = (pet: Pet) => {
     // router.push(`/pet-profile?petId=${pet.id}`);
     Alert.alert('Pet Profile', `${pet.name} profili yakında açılacak`);

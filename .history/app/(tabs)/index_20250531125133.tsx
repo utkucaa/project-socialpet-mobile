@@ -207,10 +207,6 @@ export default function HomeScreen() {
       case '/donate':
         router.push('/donate');
         break;
-      case '/health-tracking':
-        // Profil sayfasındaki Evcil Hayvanlarım sekmesine git
-        router.push('/(tabs)/profile?tab=pets');
-        break;
       default:
         console.log('Unknown route:', route);
     }
@@ -295,31 +291,6 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           ItemSeparatorComponent={() => <View style={{ height: 15 }} />}
         />
-
-        {/* Sağlık Takibi Kartı */}
-        <TouchableOpacity 
-          style={styles.healthTrackingCard}
-          onPress={() => handleFeaturePress('/health-tracking')}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#4ECDC4', '#44A08D']}
-            style={styles.healthTrackingGradient}
-          >
-            <View style={styles.healthTrackingContent}>
-              <View style={styles.healthTrackingLeft}>
-                <Text style={styles.healthTrackingIcon}>🏥</Text>
-                <View style={styles.healthTrackingTextContainer}>
-                  <Text style={styles.healthTrackingTitle}>Sağlık Takibi</Text>
-                  <Text style={styles.healthTrackingDescription}>
-                    Evcil hayvanlarınızı ekleyebilir{'\n'}sağlık takiplerini yapabilirsiniz
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.healthTrackingArrow}>→</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
 
         <View style={styles.recommendedSection}>
           <Text style={styles.sectionTitle}>✨ Önerilen İlanlar</Text>
@@ -578,54 +549,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-  },
-  healthTrackingCard: {
-    marginTop: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  healthTrackingGradient: {
-    padding: 20,
-  },
-  healthTrackingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
-  },
-  healthTrackingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  healthTrackingIcon: {
-    fontSize: 32,
-    marginRight: 15,
-  },
-  healthTrackingTextContainer: {
-    flex: 1,
-  },
-  healthTrackingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  healthTrackingDescription: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    lineHeight: 18,
-    opacity: 0.9,
-  },
-  healthTrackingArrow: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginLeft: 10,
   },
 });
