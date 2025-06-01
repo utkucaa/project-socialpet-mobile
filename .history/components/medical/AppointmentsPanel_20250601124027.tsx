@@ -443,6 +443,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
     <>
       <View style={styles.container}>
         <View style={styles.header}>
+          <Text style={styles.title}>📅 Randevu Kayıtları</Text>
           <TouchableOpacity
             onPress={openAddModal}
             style={styles.addButton}
@@ -465,7 +466,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
 
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#10B981" />
+            <ActivityIndicator size="large" color="#AB75C2" />
             <Text style={styles.loadingText}>Randevu kayıtları yükleniyor...</Text>
           </View>
         ) : appointments.length === 0 ? (
@@ -778,12 +779,17 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
   addButton: {
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#10B981',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
@@ -794,7 +800,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   addButtonText: {
-    color: '#00695C',
+    color: 'white',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -859,13 +865,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   emptyAddButton: {
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#E6D3F7',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,
   },
   emptyAddButtonText: {
-    color: '#00695C',
+    color: '#6B46C1',
     fontWeight: '600',
   },
   appointmentsList: {
@@ -917,9 +923,9 @@ const styles = StyleSheet.create({
   },
   appointmentDateLarge: {
     fontSize: 16,
-    color: '#00695C',
+    color: '#6B46C1',
     fontWeight: '700',
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#E6D3F7',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1070,7 +1076,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   saveButton: {
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#E6D3F7',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,
@@ -1079,7 +1085,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#d1d5db',
   },
   saveButtonText: {
-    color: '#00695C',
+    color: '#6B46C1',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -1156,7 +1162,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   selectedDateOption: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#8B5A96',
   },
   dateOptionText: {
     fontSize: 16,
@@ -1173,7 +1179,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   selectedTimeOption: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#8B5A96',
   },
   timeOptionText: {
     fontSize: 16,

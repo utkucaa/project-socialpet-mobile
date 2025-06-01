@@ -60,34 +60,4 @@ export interface MedicationForm {
   endDate: string | null;
   prescribedBy: string;
   notes: string;
-}
-
-export interface Allergy {
-  id: string;
-  allergen: string;
-  reaction: string;
-  severity: string;
-  notes: string;
-}
-
-export interface AllergyForm {
-  allergen: string;
-  reaction: string;
-  severity: string;
-  notes: string;
-}
-
-export interface WeightRecord {
-  id: string;
-  weight: number;
-  unit: 'kg' | 'lb';
-  date: string;
-  notes: string;
-}
-
-export interface WeightRecordForm {
-  weight: number;
-  unit: string;
-  recordDate: string;
-  notes: string;
 } 

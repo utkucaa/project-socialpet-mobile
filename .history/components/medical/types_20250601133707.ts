@@ -75,19 +75,4 @@ export interface AllergyForm {
   reaction: string;
   severity: string;
   notes: string;
-}
-
-export interface WeightRecord {
-  id: string;
-  weight: number;
-  unit: 'kg' | 'lb';
-  date: string;
-  notes: string;
-}
-
-export interface WeightRecordForm {
-  weight: number;
-  unit: string;
-  recordDate: string;
-  notes: string;
 } 

@@ -11,31 +11,31 @@ import {
     View
 } from 'react-native';
 import {
-    addAppointment,
-    deleteAppointment,
-    getAppointments,
-    updateAppointment
+    addTreatment,
+    deleteTreatment,
+    getTreatments,
+    updateTreatment
 } from '../../services/medicalRecordService';
-import { Appointment } from './types';
+import { Treatment } from './types';
 
-interface AppointmentsPanelProps {
+interface TreatmentsPanelProps {
   petId: string | null;
 }
 
-export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+export const TreatmentsPanel: React.FC<TreatmentsPanelProps> = ({ petId }) => {
+  const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // Form state
-  const [reason, setReason] = useState('');
-  const [appointmentDate, setAppointmentDate] = useState('');
-  const [appointmentTime, setAppointmentTime] = useState('');
+  const [treatmentType, setTreatmentType] = useState('');
+  const [description, setDescription] = useState('');
+  const [treatmentDate, setTreatmentDate] = useState('');
+  const [treatmentTime, setTreatmentTime] = useState('');
   const [veterinarian, setVeterinarian] = useState('');
-  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [editingTreatment, setEditingTreatment] = useState<Treatment | null>(null);
   
   // Date and time picker state
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -46,11 +46,11 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
   // Counter to force refresh
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  // Fetch appointments from backend
-  const fetchAppointments = async () => {
+  // Fetch treatments from backend
+  const fetchTreatments = async () => {
     if (!petId) {
       setIsLoading(false);
-      setAppointments([]);
+      setTreatments([]);
       return;
     }
 
@@ -58,44 +58,31 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
       setIsLoading(true);
       setError(null);
       
-      console.log('Fetching appointments for pet:', petId);
-      const response = await getAppointments(petId);
-      console.log('Fetched appointments:', response);
+      console.log('Fetching treatments for pet:', petId);
+      const response = await getTreatments(petId);
+      console.log('Fetched treatments:', response);
       
-      // Transform API data to match our component's Appointment type
-      const transformedAppointments: Appointment[] = response.map((item: any) => {
-        const appointmentDateTime = new Date(item.appointmentDate || item.date);
-        
-        return {
-          id: item.id.toString(),
-          date: appointmentDateTime.toISOString(),
-          reason: item.reason,
-          veterinarian: item.veterinarian,
-          notes: item.notes || ''
-        };
-      });
-      
-      setAppointments(transformedAppointments);
+      setTreatments(response);
     } catch (err) {
-      console.error('Error fetching appointments:', err);
-      setAppointments([]);
-      setError('Randevu kayıtları yüklenemedi.');
+      console.error('Error fetching treatments:', err);
+      setTreatments([]);
+      setError('Tedavi kayıtları yüklenemedi.');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAppointments();
+    fetchTreatments();
   }, [petId, refreshCounter]);
 
   const resetForm = () => {
-    setReason('');
-    setAppointmentDate('');
-    setAppointmentTime('');
+    setTreatmentType('');
+    setDescription('');
+    setTreatmentDate('');
+    setTreatmentTime('');
     setVeterinarian('');
-    setNotes('');
-    setEditingAppointment(null);
+    setEditingTreatment(null);
     setError(null);
     
     // Reset to today's date and 9 AM but don't auto-select
@@ -104,8 +91,6 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
     defaultTime.setHours(9, 0, 0, 0);
     setSelectedDate(today);
     setSelectedTime(defaultTime);
-    
-    // Don't set default display values - let user select
   };
 
   const openAddModal = () => {
@@ -138,57 +123,42 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
   };
 
   const validateForm = () => {
-    console.log('🔍 Validating form...');
-    console.log('Reason:', `"${reason}"`);
-    console.log('Date:', `"${appointmentDate}"`);
-    console.log('Time:', `"${appointmentTime}"`);
+    console.log('🔍 Validating treatment form...');
+    console.log('Type:', `"${treatmentType}"`);
+    console.log('Description:', `"${description}"`);
+    console.log('Date:', `"${treatmentDate}"`);
+    console.log('Time:', `"${treatmentTime}"`);
     console.log('Veterinarian:', `"${veterinarian}"`);
     
-    if (!reason.trim()) {
-      console.log('❌ Reason validation failed');
-      setError('Randevu sebebi zorunludur');
+    if (!treatmentType.trim()) {
+      console.log('❌ Treatment type validation failed');
+      setError('Tedavi türü zorunludur');
       return false;
     }
-    console.log('✅ Reason validation passed');
     
-    if (!appointmentDate.trim()) {
+    if (!description.trim()) {
+      console.log('❌ Description validation failed');
+      setError('Tedavi açıklaması zorunludur');
+      return false;
+    }
+    
+    if (!treatmentDate.trim()) {
       console.log('❌ Date validation failed - empty');
-      setError('Randevu tarihi zorunludur (YYYY-MM-DD formatında)');
+      setError('Tedavi tarihi zorunludur');
       return false;
     }
-    console.log('✅ Date not empty');
     
-    if (!appointmentTime.trim()) {
+    if (!treatmentTime.trim()) {
       console.log('❌ Time validation failed - empty');
-      setError('Randevu saati zorunludur (HH:MM formatında)');
+      setError('Tedavi saati zorunludur');
       return false;
     }
-    console.log('✅ Time not empty');
     
     if (!veterinarian.trim()) {
       console.log('❌ Veterinarian validation failed');
       setError('Veteriner adı zorunludur');
       return false;
     }
-    console.log('✅ Veterinarian validation passed');
-    
-    // Validate date format
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(appointmentDate)) {
-      console.log('❌ Date format validation failed. Expected: YYYY-MM-DD, Got:', appointmentDate);
-      setError('Lütfen tarihi YYYY-MM-DD formatında girin (örn: 2024-12-25)');
-      return false;
-    }
-    console.log('✅ Date format validation passed');
-    
-    // Validate time format  
-    const timeRegex = /^\d{2}:\d{2}$/;
-    if (!timeRegex.test(appointmentTime)) {
-      console.log('❌ Time format validation failed. Expected: HH:MM, Got:', appointmentTime);
-      setError('Lütfen saati HH:MM formatında girin (örn: 14:30)');
-      return false;
-    }
-    console.log('✅ Time format validation passed');
     
     console.log('🎉 All validations passed!');
     setError(null);
@@ -198,7 +168,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
   const handleSubmit = async () => {
     console.log('🔵 HandleSubmit called');
     console.log('Pet ID:', petId);
-    console.log('Form data:', { reason, appointmentDate, appointmentTime, veterinarian, notes });
+    console.log('Form data:', { treatmentType, description, treatmentDate, treatmentTime, veterinarian });
 
     if (!petId) {
       setError('Pet ID eksik');
@@ -217,114 +187,104 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
       setError(null);
       
       // Combine date and time into a single ISO string
-      const dateTimeString = `${appointmentDate}T${appointmentTime}:00`;
+      const dateTimeString = `${treatmentDate}T${treatmentTime}:00`;
       console.log('📅 DateTime string:', dateTimeString);
       
-      const appointmentData = {
-        appointmentDate: dateTimeString,
-        reason: reason.trim(),
-        veterinarian: veterinarian.trim(),
-        notes: notes.trim()
+      const treatmentData = {
+        treatmentType: treatmentType.trim(),
+        description: description.trim(),
+        treatmentDate: dateTimeString,
+        veterinarian: veterinarian.trim()
       };
       
-      console.log('📝 Submitting appointment:', appointmentData);
+      console.log('📝 Submitting treatment:', treatmentData);
       
-      if (editingAppointment) {
-        console.log('✏️ Updating appointment with ID:', editingAppointment.id);
+      if (editingTreatment) {
+        console.log('✏️ Updating treatment with ID:', editingTreatment.id);
         try {
-          const updated = await updateAppointment(editingAppointment.id, appointmentData);
-          console.log('✅ Updated appointment:', updated);
+          const updated = await updateTreatment(petId, editingTreatment.id, treatmentData);
+          console.log('✅ Updated treatment:', updated);
           
-          // Update the appointment in the list
-          setAppointments(appointments.map(apt => 
-            apt.id === editingAppointment.id 
-              ? { ...apt, reason: appointmentData.reason, veterinarian: appointmentData.veterinarian, notes: appointmentData.notes, date: dateTimeString }
-              : apt
+          // Update the treatment in the list
+          setTreatments(treatments.map(treatment => 
+            treatment.id === editingTreatment.id 
+              ? { ...treatment, type: treatmentData.treatmentType, description: treatmentData.description, veterinarian: treatmentData.veterinarian, date: dateTimeString }
+              : treatment
           ));
         } catch (updateError) {
           console.log('⚠️ Backend update failed, updating locally:', updateError);
           // Update locally even if backend fails
-          setAppointments(appointments.map(apt => 
-            apt.id === editingAppointment.id 
-              ? { ...apt, reason: appointmentData.reason, veterinarian: appointmentData.veterinarian, notes: appointmentData.notes, date: dateTimeString }
-              : apt
+          setTreatments(treatments.map(treatment => 
+            treatment.id === editingTreatment.id 
+              ? { ...treatment, type: treatmentData.treatmentType, description: treatmentData.description, veterinarian: treatmentData.veterinarian, date: dateTimeString }
+              : treatment
           ));
         }
       } else {
-        console.log('➕ Adding new appointment');
+        console.log('➕ Adding new treatment');
         try {
-          const newAppointment = await addAppointment(petId, appointmentData);
-          console.log('✅ New appointment created:', newAppointment);
+          const newTreatment = await addTreatment(petId, treatmentData);
+          console.log('✅ New treatment created:', newTreatment);
           
-          // Transform the API response to match our component's Appointment type
-          const appointmentDateTime = new Date(newAppointment.appointmentDate);
-          const transformedAppointment: Appointment = {
-            id: newAppointment.id.toString(),
-            date: appointmentDateTime.toISOString(),
-            reason: newAppointment.reason,
-            veterinarian: newAppointment.veterinarian,
-            notes: newAppointment.notes || ''
-          };
-          
-          setAppointments([...appointments, transformedAppointment]);
+          setTreatments([...treatments, newTreatment]);
         } catch (addError) {
           console.log('⚠️ Backend add failed, adding locally:', addError);
-          // Create a temporary appointment locally even if backend fails
+          // Create a temporary treatment locally even if backend fails
           const tempId = `temp-${Date.now()}`;
-          const tempAppointment: Appointment = {
+          const tempTreatment: Treatment = {
             id: tempId,
+            type: treatmentData.treatmentType,
+            description: treatmentData.description,
             date: dateTimeString,
-            reason: appointmentData.reason,
-            veterinarian: appointmentData.veterinarian,
-            notes: appointmentData.notes
+            veterinarian: treatmentData.veterinarian
           };
           
-          console.log('🔧 Created temp appointment:', tempAppointment);
-          setAppointments([...appointments, tempAppointment]);
+          console.log('🔧 Created temp treatment:', tempTreatment);
+          setTreatments([...treatments, tempTreatment]);
         }
       }
       
-      console.log('🎉 Appointment operation completed');
+      console.log('🎉 Treatment operation completed');
       closeModal();
       setRefreshCounter(prev => prev + 1);
     } catch (err) {
-      console.error('💥 Error submitting appointment:', err);
-      setError('Randevu kaydedilemedi. Lütfen tekrar deneyin.');
+      console.error('💥 Error submitting treatment:', err);
+      setError('Tedavi kaydedilemedi. Lütfen tekrar deneyin.');
     } finally {
       setIsSubmitting(false);
       console.log('🏁 HandleSubmit finished');
     }
   };
 
-  const handleEdit = (appointment: Appointment) => {
-    console.log('Editing appointment:', appointment);
+  const handleEdit = (treatment: Treatment) => {
+    console.log('Editing treatment:', treatment);
     
-    const appointmentDate = new Date(appointment.date);
-    const dateStr = appointmentDate.toISOString().split('T')[0];
-    const timeStr = appointmentDate.toLocaleTimeString('tr-TR', { 
+    const treatmentDate = new Date(treatment.date);
+    const dateStr = treatmentDate.toISOString().split('T')[0];
+    const timeStr = treatmentDate.toLocaleTimeString('tr-TR', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false 
     });
     
-    setReason(appointment.reason);
-    setAppointmentDate(dateStr);
-    setAppointmentTime(timeStr);
-    setVeterinarian(appointment.veterinarian);
-    setNotes(appointment.notes);
+    setTreatmentType(treatment.type);
+    setDescription(treatment.description);
+    setTreatmentDate(dateStr);
+    setTreatmentTime(timeStr);
+    setVeterinarian(treatment.veterinarian);
     
     // Set the selected date and time for pickers
-    setSelectedDate(appointmentDate);
-    setSelectedTime(appointmentDate);
+    setSelectedDate(treatmentDate);
+    setSelectedTime(treatmentDate);
     
-    setEditingAppointment(appointment);
+    setEditingTreatment(treatment);
     setShowModal(true);
   };
 
-  const handleDelete = async (appointmentId: string) => {
+  const handleDelete = async (treatmentId: string) => {
     Alert.alert(
-      'Randevuyu Sil',
-      'Bu randevuyu silmek istediğinizden emin misiniz?',
+      'Tedavi Kaydını Sil',
+      'Bu tedavi kaydını silmek istediğinizden emin misiniz?',
       [
         { text: 'İptal', style: 'cancel' },
         {
@@ -332,13 +292,13 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Deleting appointment with ID:', appointmentId);
-              await deleteAppointment(appointmentId);
-              setAppointments(appointments.filter(apt => apt.id !== appointmentId));
+              console.log('Deleting treatment with ID:', treatmentId);
+              await deleteTreatment(petId!, treatmentId);
+              setTreatments(treatments.filter(treatment => treatment.id !== treatmentId));
               setRefreshCounter(prev => prev + 1);
             } catch (err) {
-              console.error('Error deleting appointment:', err);
-              setError('Randevu silinemedi. Lütfen tekrar deneyin.');
+              console.error('Error deleting treatment:', err);
+              setError('Tedavi kaydı silinemedi. Lütfen tekrar deneyin.');
             }
           }
         }
@@ -374,38 +334,38 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
     }
   };
 
-  const isPastAppointment = (dateString: string) => {
-    const appointmentDate = new Date(dateString);
+  const isPastTreatment = (dateString: string) => {
+    const treatmentDate = new Date(dateString);
     const now = new Date();
-    return appointmentDate < now;
+    return treatmentDate < now;
   };
 
-  const renderAppointmentCard = (appointment: Appointment) => {
-    const isPast = isPastAppointment(appointment.date);
+  const renderTreatmentCard = (treatment: Treatment) => {
+    const isPast = isPastTreatment(treatment.date);
     
     return (
       <View 
-        key={appointment.id} 
-        style={[styles.appointmentCard, isPast && styles.pastAppointmentCard]}
+        key={treatment.id} 
+        style={[styles.treatmentCard, isPast && styles.pastTreatmentCard]}
       >
         <View style={styles.cardMainHeader}>
-          <View style={styles.appointmentMainInfo}>
-            <Text style={[styles.appointmentReasonLarge, isPast && styles.pastText]}>
-              {appointment.reason}
+          <View style={styles.treatmentMainInfo}>
+            <Text style={[styles.treatmentTypeLarge, isPast && styles.pastText]}>
+              {treatment.type}
             </Text>
-            <Text style={[styles.appointmentDateLarge, isPast && styles.pastDateText]}>
-              {formatDate(appointment.date)} - {formatTime(appointment.date)}
+            <Text style={[styles.treatmentDateLarge, isPast && styles.pastDateText]}>
+              {formatDate(treatment.date)} - {formatTime(treatment.date)}
             </Text>
           </View>
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              onPress={() => handleEdit(appointment)}
+              onPress={() => handleEdit(treatment)}
               style={styles.editButton}
             >
               <Text style={styles.editButtonText}>✏️</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => handleDelete(appointment.id)}
+              onPress={() => handleDelete(treatment.id)}
               style={styles.deleteButton}
             >
               <Text style={styles.deleteButtonText}>🗑️</Text>
@@ -415,39 +375,38 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
         
         <View style={styles.cardContent}>
           <View style={styles.infoRow}>
+            <Text style={styles.infoIcon}>📝</Text>
+            <Text style={styles.infoLabel}>Açıklama:</Text>
+            <Text style={[styles.infoValue, isPast && styles.pastText]}>
+              {treatment.description}
+            </Text>
+          </View>
+          <View style={styles.infoRow}>
             <Text style={styles.infoIcon}>👨‍⚕️</Text>
             <Text style={styles.infoLabel}>Veteriner:</Text>
             <Text style={[styles.infoValue, isPast && styles.pastText]}>
-              {appointment.veterinarian}
+              {treatment.veterinarian}
             </Text>
           </View>
-          {appointment.notes && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoIcon}>📝</Text>
-              <Text style={styles.infoLabel}>Notlar:</Text>
-              <Text style={[styles.infoValue, isPast && styles.pastText]}>
-                {appointment.notes}
-              </Text>
-            </View>
-          )}
         </View>
       </View>
     );
   };
 
-  // Separate appointments into upcoming and past
-  const upcomingAppointments = appointments.filter(appointment => !isPastAppointment(appointment.date));
-  const pastAppointments = appointments.filter(appointment => isPastAppointment(appointment.date));
+  // Separate treatments into recent and past
+  const recentTreatments = treatments.filter(treatment => !isPastTreatment(treatment.date));
+  const pastTreatments = treatments.filter(treatment => isPastTreatment(treatment.date));
 
   return (
     <>
       <View style={styles.container}>
         <View style={styles.header}>
+          <Text style={styles.title}>⚕️ Tedavi Kayıtları</Text>
           <TouchableOpacity
             onPress={openAddModal}
             style={styles.addButton}
           >
-            <Text style={styles.addButtonText}>+ Randevu Ekle</Text>
+            <Text style={styles.addButtonText}>+ Tedavi Ekle</Text>
           </TouchableOpacity>
         </View>
 
@@ -466,35 +425,35 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#10B981" />
-            <Text style={styles.loadingText}>Randevu kayıtları yükleniyor...</Text>
+            <Text style={styles.loadingText}>Tedavi kayıtları yükleniyor...</Text>
           </View>
-        ) : appointments.length === 0 ? (
+        ) : treatments.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📅</Text>
-            <Text style={styles.emptyTitle}>Henüz randevu kaydı yok</Text>
-            <Text style={styles.emptyText}>İlk randevu kaydınızı ekleyin</Text>
+            <Text style={styles.emptyIcon}>⚕️</Text>
+            <Text style={styles.emptyTitle}>Henüz tedavi kaydı yok</Text>
+            <Text style={styles.emptyText}>İlk tedavi kaydınızı ekleyin</Text>
             <TouchableOpacity 
               style={styles.emptyAddButton}
               onPress={openAddModal}
             >
-              <Text style={styles.emptyAddButtonText}>+ İlk Randevuyu Ekle</Text>
+              <Text style={styles.emptyAddButtonText}>+ İlk Tedaviyi Ekle</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          <ScrollView style={styles.appointmentsList} showsVerticalScrollIndicator={false}>
-            {/* Upcoming Appointments */}
-            {upcomingAppointments.length > 0 && (
+          <ScrollView style={styles.treatmentsList} showsVerticalScrollIndicator={false}>
+            {/* Recent Treatments */}
+            {recentTreatments.length > 0 && (
               <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Yaklaşan Randevular</Text>
-                {upcomingAppointments.map(renderAppointmentCard)}
+                <Text style={styles.sectionTitle}>Son Tedaviler</Text>
+                {recentTreatments.map(renderTreatmentCard)}
               </View>
             )}
             
-            {/* Past Appointments */}
-            {pastAppointments.length > 0 && (
+            {/* Past Treatments */}
+            {pastTreatments.length > 0 && (
               <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Geçmiş Randevular</Text>
-                {pastAppointments.map(renderAppointmentCard)}
+                <Text style={styles.sectionTitle}>Geçmiş Tedaviler</Text>
+                {pastTreatments.map(renderTreatmentCard)}
               </View>
             )}
           </ScrollView>
@@ -511,7 +470,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
             <View style={styles.modalContainer}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>
-                  {editingAppointment ? 'Randevu Kaydını Düzenle' : 'Yeni Randevu Ekle'}
+                  {editingTreatment ? 'Tedavi Kaydını Düzenle' : 'Yeni Tedavi Ekle'}
                 </Text>
                 <TouchableOpacity
                   onPress={closeModal}
@@ -523,18 +482,31 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
               
               <ScrollView style={styles.modalContent}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Randevu Sebebi *</Text>
+                  <Text style={styles.label}>Tedavi Türü *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={reason}
-                    onChangeText={setReason}
-                    placeholder="Örn: Genel kontrol, Aşı, Tedavi..."
+                    value={treatmentType}
+                    onChangeText={setTreatmentType}
+                    placeholder="Örn: Parazit tedavisi, Diş temizliği, Cerrahi..."
                     placeholderTextColor="#9CA3AF"
                   />
                 </View>
                 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Randevu Tarihi *</Text>
+                  <Text style={styles.label}>Tedavi Açıklaması *</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Tedavi detaylarını açıklayın..."
+                    placeholderTextColor="#9CA3AF"
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Tedavi Tarihi *</Text>
                   <TouchableOpacity
                     onPress={() => {
                       console.log('Date button pressed!');
@@ -543,13 +515,13 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
                     style={styles.datePickerButton}
                   >
                     <Text style={styles.datePickerButtonText}>
-                      {formatDisplayDate(appointmentDate)}
+                      {formatDisplayDate(treatmentDate)}
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Randevu Saati *</Text>
+                  <Text style={styles.label}>Tedavi Saati *</Text>
                   <TouchableOpacity
                     onPress={() => {
                       console.log('Time button pressed!');
@@ -558,7 +530,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
                     style={styles.timePickerButton}
                   >
                     <Text style={styles.timePickerButtonText}>
-                      {formatDisplayTime(appointmentTime)}
+                      {formatDisplayTime(treatmentTime)}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -571,19 +543,6 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
                     onChangeText={setVeterinarian}
                     placeholder="Veteriner adını girin"
                     placeholderTextColor="#9CA3AF"
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Notlar</Text>
-                  <TextInput
-                    style={[styles.textInput, styles.textArea]}
-                    value={notes}
-                    onChangeText={setNotes}
-                    placeholder="Ek notlar (isteğe bağlı)"
-                    placeholderTextColor="#9CA3AF"
-                    multiline
-                    numberOfLines={3}
                   />
                 </View>
                 
@@ -600,7 +559,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
                     style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
                   >
                     <Text style={styles.saveButtonText}>
-                      {isSubmitting ? 'Kaydediliyor...' : (editingAppointment ? 'Güncelle' : 'Kaydet')}
+                      {isSubmitting ? 'Kaydediliyor...' : (editingTreatment ? 'Güncelle' : 'Kaydet')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -615,10 +574,10 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
         showTimePicker={showTimePicker}
         setShowDatePicker={setShowDatePicker}
         setShowTimePicker={setShowTimePicker}
-        appointmentDate={appointmentDate}
-        appointmentTime={appointmentTime}
-        setAppointmentDate={setAppointmentDate}
-        setAppointmentTime={setAppointmentTime}
+        appointmentDate={treatmentDate}
+        appointmentTime={treatmentTime}
+        setAppointmentDate={setTreatmentDate}
+        setAppointmentTime={setTreatmentTime}
         setSelectedDate={setSelectedDate}
         setSelectedTime={setSelectedTime}
       />
@@ -672,9 +631,9 @@ const DateTimePickerModals: React.FC<{
             </View>
             
             <ScrollView style={styles.dateScrollContainer}>
-              {Array.from({ length: 30 }, (_, i) => {
+              {Array.from({ length: 90 }, (_, i) => {
                 const date = new Date();
-                date.setDate(date.getDate() + i);
+                date.setDate(date.getDate() - 30 + i); // 30 days in past to 60 days in future
                 const dateStr = date.toISOString().split('T')[0];
                 const isSelected = appointmentDate === dateStr;
                 
@@ -731,8 +690,8 @@ const DateTimePickerModals: React.FC<{
             </View>
             
             <ScrollView style={styles.timeScrollContainer}>
-              {Array.from({ length: 21 }, (_, i) => {
-                const hour = Math.floor(8 + (i * 0.5));
+              {Array.from({ length: 24 }, (_, i) => {
+                const hour = Math.floor(6 + (i * 0.5)); // 6:00 to 20:00 every 30 minutes
                 const minute = (i % 2) * 30;
                 const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                 const isSelected = appointmentTime === timeStr;
@@ -778,12 +737,17 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
   addButton: {
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#10B981',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
@@ -794,7 +758,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   addButtonText: {
-    color: '#00695C',
+    color: 'white',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -859,16 +823,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   emptyAddButton: {
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#FED7AA',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 10,
   },
   emptyAddButtonText: {
-    color: '#00695C',
+    color: '#EA580C',
     fontWeight: '600',
   },
-  appointmentsList: {
+  treatmentsList: {
     flex: 1,
   },
   sectionContainer: {
@@ -881,7 +845,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingLeft: 4,
   },
-  appointmentCard: {
+  treatmentCard: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
@@ -894,7 +858,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 5,
     borderLeftColor: '#10B981',
   },
-  pastAppointmentCard: {
+  pastTreatmentCard: {
     backgroundColor: '#f9fafb',
     borderLeftColor: '#9ca3af',
   },
@@ -904,22 +868,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 16,
   },
-  appointmentMainInfo: {
+  treatmentMainInfo: {
     flex: 1,
     marginRight: 12,
   },
-  appointmentReasonLarge: {
+  treatmentTypeLarge: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 6,
     lineHeight: 24,
   },
-  appointmentDateLarge: {
+  treatmentDateLarge: {
     fontSize: 16,
-    color: '#00695C',
+    color: '#EA580C',
     fontWeight: '700',
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#FED7AA',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1046,43 +1010,6 @@ const styles = StyleSheet.create({
     height: 80,
     textAlignVertical: 'top',
   },
-  helperText: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 20,
-    gap: 12,
-  },
-  cancelButton: {
-    backgroundColor: '#e5e7eb',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  cancelButtonText: {
-    color: '#374151',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  saveButton: {
-    backgroundColor: '#B2DFDB',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#d1d5db',
-  },
-  saveButtonText: {
-    color: '#00695C',
-    fontWeight: '700',
-    fontSize: 14,
-  },
   datePickerButton: {
     borderWidth: 2,
     borderColor: '#d1d5db',
@@ -1106,6 +1033,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1f2937',
     fontWeight: '500',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 20,
+    gap: 12,
+  },
+  cancelButton: {
+    backgroundColor: '#e5e7eb',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  cancelButtonText: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  saveButton: {
+    backgroundColor: '#FED7AA',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  saveButtonDisabled: {
+    backgroundColor: '#d1d5db',
+  },
+  saveButtonText: {
+    color: '#EA580C',
+    fontWeight: '700',
+    fontSize: 14,
   },
   pickerOverlay: {
     flex: 1,

@@ -443,6 +443,7 @@ export const AppointmentsPanel: React.FC<AppointmentsPanelProps> = ({ petId }) =
     <>
       <View style={styles.container}>
         <View style={styles.header}>
+          <Text style={styles.title}>📅 Randevu Kayıtları</Text>
           <TouchableOpacity
             onPress={openAddModal}
             style={styles.addButton}
@@ -778,12 +779,17 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
   addButton: {
-    backgroundColor: '#B2DFDB',
+    backgroundColor: '#10B981',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,
@@ -794,7 +800,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   addButtonText: {
-    color: '#00695C',
+    color: 'white',
     fontWeight: '700',
     fontSize: 14,
   },

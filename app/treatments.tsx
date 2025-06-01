@@ -1,9 +1,9 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
-import { AppointmentsPanel } from '../components/medical';
+import { TreatmentsPanel } from '../components/medical';
 
-export default function AppointmentsScreen() {
+export default function TreatmentsScreen() {
   const router = useRouter();
   const { petId } = useLocalSearchParams<{ petId: string }>();
 
@@ -11,7 +11,7 @@ export default function AppointmentsScreen() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen 
         options={{ 
-          title: 'Randevu Kayıtları',
+          title: 'Tedavi Kayıtları',
           headerBackTitle: 'Geri',
           headerTintColor: '#AB75C2',
           headerStyle: {
@@ -23,7 +23,7 @@ export default function AppointmentsScreen() {
           },
         }} 
       />
-      <AppointmentsPanel petId={petId || null} />
+      <TreatmentsPanel petId={petId || null} />
     </SafeAreaView>
   );
 }

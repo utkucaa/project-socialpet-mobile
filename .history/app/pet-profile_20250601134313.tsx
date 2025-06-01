@@ -198,12 +198,6 @@ export default function PetProfileScreen() {
     }
   };
 
-  const handleWeightRecordsPress = () => {
-    if (pet) {
-      router.push(`/weight-records?petId=${pet.id}`);
-    }
-  };
-
   const handleCategoryPress = (category: HealthCategory) => {
     // Update selected category for visual feedback
     setSelectedCategory(category);
@@ -223,9 +217,6 @@ export default function PetProfileScreen() {
     } else if (category.id === 'allergies') {
       // Navigate to allergies screen for allergies category
       handleAllergyPress();
-    } else if (category.id === 'surgeries') {
-      // Navigate to weight records screen for surgeries category (renamed to weight records)
-      handleWeightRecordsPress();
     } else {
       // For other categories, just update selection (can add navigation later)
       console.log(`Selected category: ${category.title}`);
