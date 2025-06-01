@@ -651,12 +651,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
-                style={styles.modalScrollView} 
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled={true}
-                bounces={false}
-              >
+              <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
                 {/* Photo Section */}
                 <View style={styles.modalPhotoSection}>
                   <TouchableOpacity style={styles.modalPhotoButton} onPress={pickImage}>
@@ -699,7 +694,7 @@ export default function ProfileScreen() {
                   </View>
 
                   {/* Gender */}
-                  <View style={[styles.modalInputGroup, { zIndex: 3000 }]}>
+                  <View style={styles.modalInputGroup}>
                     <Text style={styles.modalLabel}>Cinsiyet *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 
@@ -732,7 +727,7 @@ export default function ProfileScreen() {
                   </View>
 
                   {/* Species */}
-                  <View style={[styles.modalInputGroup, { zIndex: 2000 }]}>
+                  <View style={styles.modalInputGroup}>
                     <Text style={styles.modalLabel}>Hayvan Türü *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 
@@ -764,7 +759,7 @@ export default function ProfileScreen() {
                   </View>
 
                   {/* Breed */}
-                  <View style={[styles.modalInputGroup, { zIndex: 1000 }]}>
+                  <View style={styles.modalInputGroup}>
                     <Text style={styles.modalLabel}>Cinsi *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 

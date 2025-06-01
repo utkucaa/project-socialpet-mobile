@@ -36,158 +36,28 @@ export interface HealthRecord {
 // Hayvan türleri ve cinsler
 export const ANIMAL_SPECIES = {
   köpek: [
-    'Labrador Retriever', 'Golden Retriever', 'German Shepherd', 'Bulldog', 'Poodle', 'Beagle', 'Rottweiler', 'Yorkshire Terrier', 'Dachshund', 
+    'Golden Retriever', 'Labrador Retriever', 'German Shepherd', 'Bulldog', 
+    'Poodle', 'Beagle', 'Rottweiler', 'Yorkshire Terrier', 'Dachshund', 
     'Siberian Husky', 'Shih Tzu', 'Boston Terrier', 'Kangal', 'Akbaş', 'Diğer'
   ],
   kedi: [
-    'Persian', 'Maine Coon', 'British Shorthair', 'Ragdoll', 'Bengal', 'Siamese', 'Abyssinian', 'Russian Blue', 'Scottish Fold', 'Sphynx',
+    'Persian', 'British Shorthair', 'Maine Coon', 'Ragdoll', 'Bengal', 
+    'Siamese', 'Abyssinian', 'Russian Blue', 'Scottish Fold', 'Sphynx',
     'Tekir', 'Van Kedisi', 'Ankara Kedisi', 'Diğer'
   ],
   kuş: [
-    'Muhabbet Kuşu', 'Kanarya', 'Sultan Papağanı', 'Cennet Papağanı', 'Hint Bülbülü', 'Java İspinozu', 'Diğer'
+    'Muhabbet Kuşu', 'Kanarya', 'Cennet Papağanı', 'Sultan Papağanı', 'Kakadu', 
+    'Ara Papağanı', 'Afrika Grisi', 'Amazon Papağanı', 'Conure', 'Diğer'
   ],
-  balık: [
-    'Goldfish', 'Betta', 'Guppy', 'Neon Tetra', 'Angelfish', 'Discus', 'Diğer'
+  hamster: [
+    'Golden Hamster', 'Dwarf Hamster', 'Roborovski', 'Chinese Hamster', 'Diğer'
   ],
   tavşan: [
     'Holland Lop', 'Mini Rex', 'Lionhead', 'Netherland Dwarf', 'Angora', 'Diğer'
   ]
 };
 
-// Backend için ID mappingleri
-const ANIMAL_TYPE_IDS = {
-  'köpek': 1,
-  'kedi': 2,
-  'kuş': 3,
-  'balık': 4,
-  'tavşan': 5,
-  'hamster': 6,
-  'kobay': 7,
-  'tavuk': 8,
-  'kaplumbağa': 9,
-  'iguana': 10
-};
-
-// Hayvan türü ID'lerinden string kodlara mapping
-const ANIMAL_TYPE_CODES = {
-  'köpek': 'DOG',
-  'kedi': 'CAT', 
-  'kuş': 'BIRD',
-  'balık': 'FISH',
-  'tavşan': 'RABBIT',
-  'hamster': 'HAMSTER',
-  'yılan': 'SNAKE',
-  'tavuk': 'CHICKEN',
-  'kaplumbağa': 'TURTLE',
-  'iguana': 'IGUANA'
-};
-
-const BREED_IDS = {
-  // Köpek cinsleri
-  'Labrador Retriever': 1,
-  'Golden Retriever': 2,
-  'German Shepherd': 3,
-  'Bulldog': 4,
-  'Poodle': 5,
-  'Beagle': 6,
-  'Rottweiler': 7,
-  'Yorkshire Terrier': 8,
-  'Dachshund': 9,
-  'Siberian Husky': 10,
-  'Shih Tzu': 11,
-  'Boston Terrier': 12,
-  'Kangal': 13,
-  'Akbaş': 14,
-  // Kedi cinsleri
-  'Persian': 15,
-  'Maine Coon': 16,
-  'British Shorthair': 17,
-  'Ragdoll': 18,
-  'Bengal': 19,
-  'Siamese': 20,
-  'Abyssinian': 21,
-  'Russian Blue': 22,
-  'Scottish Fold': 23,
-  'Sphynx': 24,
-  'Tekir': 25,
-  'Van Kedisi': 26,
-  'Ankara Kedisi': 27,
-  // Kuş cinsleri  
-  'Muhabbet Kuşu': 28,
-  'Kanarya': 29,
-  'Sultan Papağanı': 30,
-  'Cennet Papağanı': 31,
-  'Hint Bülbülü': 32,
-  'Java İspinozu': 33,
-  // Balık cinsleri
-  'Goldfish': 34,
-  'Betta': 35,
-  'Guppy': 36,
-  'Neon Tetra': 37,
-  'Angelfish': 38,
-  'Discus': 39,
-  // Tavşan cinsleri
-  'Holland Lop': 40,
-  'Mini Rex': 41,
-  'Lionhead': 42,
-  'Netherland Dwarf': 43,
-  'Angora': 44,
-  // Varsayılan
-  'Diğer': 999
-};
-
 class PetService {
-  // 🐾 Hayvan türlerini listeleme
-  async getAnimalTypes(): Promise<{code: string, name: string}[]> {
-    try {
-      const response = await apiClient.get<{code: string, name: string}[]>('/pets/animal-types');
-      
-      if (response.error) {
-        console.error('Error getting animal types:', response.error);
-        throw new Error(response.error);
-      }
-      
-      return response.data || [];
-    } catch (error) {
-      console.error('Error getting animal types:', error);
-      return [];
-    }
-  }
-
-  // 🐾 Tüm cinslerı listeleme
-  async getAllBreeds(): Promise<{id: number, name: string, description: string, animalType: string}[]> {
-    try {
-      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>('/breeds');
-      
-      if (response.error) {
-        console.error('Error getting all breeds:', response.error);
-        throw new Error(response.error);
-      }
-      
-      return response.data || [];
-    } catch (error) {
-      console.error('Error getting all breeds:', error);
-      return [];
-    }
-  }
-
-  // 🐾 Belirli hayvan türüne göre cinslerı listeleme
-  async getBreedsByAnimalType(animalType: string): Promise<{id: number, name: string, description: string, animalType: string}[]> {
-    try {
-      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>(`/breeds/by-animal-type/${animalType}`);
-      
-      if (response.error) {
-        console.error('Error getting breeds by animal type:', response.error);
-        throw new Error(response.error);
-      }
-      
-      return response.data || [];
-    } catch (error) {
-      console.error('Error getting breeds by animal type:', error);
-      return [];
-    }
-  }
-
   // 🐾 Kullanıcının evcil hayvanlarını getirme
   async getUserPets(userId: number): Promise<Pet[]> {
     try {
@@ -223,66 +93,23 @@ class PetService {
   }
 
   // Evcil hayvan ekleme (backend endpoint'i gerekecek)
-  async addPet(petData: Omit<Pet, 'id' | 'createdAt'> & { selectedBreed?: {id: number, name: string} }): Promise<Pet> {
+  async addPet(petData: Omit<Pet, 'id' | 'createdAt'>): Promise<Pet> {
     try {
       console.log('🐾 addPet metodu çağrıldı');
       console.log('📝 Gönderilecek pet verisi:', JSON.stringify(petData, null, 2));
       console.log('🌐 API endpoint: /pets');
       
-      // Backend'in beklediği format için animalType string'ini alıyoruz
-      const animalType = ANIMAL_TYPE_CODES[petData.species.toLowerCase() as keyof typeof ANIMAL_TYPE_CODES];
+      const response = await apiClient.post<Pet>('/pets', petData);
       
-      // Breed ID'yi selectedBreed objesinden alıyoruz
-      let breedId: number | undefined;
-      if (petData.selectedBreed) {
-        breedId = petData.selectedBreed.id;
-      } else {
-        // Fallback olarak eski mapping'i kullan
-        breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
-      }
-      
-      console.log('🔍 DEBUG - species:', petData.species);
-      console.log('🔍 DEBUG - species.toLowerCase():', petData.species.toLowerCase());
-      console.log('🔍 DEBUG - animalType found:', animalType);
-      console.log('🔍 DEBUG - breed:', petData.breed);
-      console.log('🔍 DEBUG - selectedBreed:', petData.selectedBreed);
-      console.log('🔍 DEBUG - breedId found:', breedId);
-      
-      if (!animalType) {
-        console.error('❌ Geçersiz hayvan türü:', petData.species);
-        console.error('💡 Mevcut türler:', Object.keys(ANIMAL_TYPE_CODES));
-        throw new Error(`Geçersiz hayvan türü: ${petData.species}`);
-      }
-      
-      if (!breedId) {
-        console.error('❌ Geçersiz cins:', petData.breed);
-        console.error('💡 Mevcut cinsler:', Object.keys(BREED_IDS));
-        throw new Error(`Geçersiz cins: ${petData.breed}`);
-      }
-      
-      // Backend'in beklediği formatı hazırlayalım (endpoint dökümantasyonuna göre)
-      const backendFormat = {
-        name: petData.name,
-        age: petData.age,
-        gender: petData.gender,
-        animalType: animalType,  // animalTypeId değil animalType string olarak
-        breedId: breedId,
-        ownerId: petData.ownerId
-      };
-      
-      console.log('🔄 Backend formatında veri:', JSON.stringify(backendFormat, null, 2));
-      
-      const response = await apiClient.post<Pet>('/pets', backendFormat);
       console.log('📡 API yanıtı:', JSON.stringify(response, null, 2));
       
-      if (!response.error && response.data) {
-        console.log('✅ Pet başarıyla eklendi:', response.data);
-        return response.data;
-      } else {
-        console.error('❌ Pet ekleme başarısız:', response.error);
-        throw new Error(response.error || 'Pet ekleme başarısız');
+      if (response.error) {
+        console.error('❌ Pet ekleme hatası:', response.error);
+        throw new Error(response.error);
       }
       
+      console.log('✅ Pet başarıyla eklendi:', response.data);
+      return response.data!;
     } catch (error) {
       console.error('💥 Pet ekleme sırasında hata:', error);
       if (error instanceof Error) {

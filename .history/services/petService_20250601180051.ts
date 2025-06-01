@@ -223,7 +223,7 @@ class PetService {
   }
 
   // Evcil hayvan ekleme (backend endpoint'i gerekecek)
-  async addPet(petData: Omit<Pet, 'id' | 'createdAt'> & { selectedBreed?: {id: number, name: string} }): Promise<Pet> {
+  async addPet(petData: Omit<Pet, 'id' | 'createdAt'>): Promise<Pet> {
     try {
       console.log('🐾 addPet metodu çağrıldı');
       console.log('📝 Gönderilecek pet verisi:', JSON.stringify(petData, null, 2));
@@ -231,21 +231,12 @@ class PetService {
       
       // Backend'in beklediği format için animalType string'ini alıyoruz
       const animalType = ANIMAL_TYPE_CODES[petData.species.toLowerCase() as keyof typeof ANIMAL_TYPE_CODES];
-      
-      // Breed ID'yi selectedBreed objesinden alıyoruz
-      let breedId: number | undefined;
-      if (petData.selectedBreed) {
-        breedId = petData.selectedBreed.id;
-      } else {
-        // Fallback olarak eski mapping'i kullan
-        breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
-      }
+      const breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
       
       console.log('🔍 DEBUG - species:', petData.species);
       console.log('🔍 DEBUG - species.toLowerCase():', petData.species.toLowerCase());
       console.log('🔍 DEBUG - animalType found:', animalType);
       console.log('🔍 DEBUG - breed:', petData.breed);
-      console.log('🔍 DEBUG - selectedBreed:', petData.selectedBreed);
       console.log('🔍 DEBUG - breedId found:', breedId);
       
       if (!animalType) {
@@ -256,7 +247,6 @@ class PetService {
       
       if (!breedId) {
         console.error('❌ Geçersiz cins:', petData.breed);
-        console.error('💡 Mevcut cinsler:', Object.keys(BREED_IDS));
         throw new Error(`Geçersiz cins: ${petData.breed}`);
       }
       

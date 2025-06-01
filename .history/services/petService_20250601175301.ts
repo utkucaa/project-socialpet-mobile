@@ -140,7 +140,7 @@ class PetService {
   // 🐾 Hayvan türlerini listeleme
   async getAnimalTypes(): Promise<{code: string, name: string}[]> {
     try {
-      const response = await apiClient.get<{code: string, name: string}[]>('/pets/animal-types');
+      const response = await apiClient.get<{code: string, name: string}[]>('/api/pets/animal-types');
       
       if (response.error) {
         console.error('Error getting animal types:', response.error);
@@ -157,7 +157,7 @@ class PetService {
   // 🐾 Tüm cinslerı listeleme
   async getAllBreeds(): Promise<{id: number, name: string, description: string, animalType: string}[]> {
     try {
-      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>('/breeds');
+      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>('/api/breeds');
       
       if (response.error) {
         console.error('Error getting all breeds:', response.error);
@@ -174,7 +174,7 @@ class PetService {
   // 🐾 Belirli hayvan türüne göre cinslerı listeleme
   async getBreedsByAnimalType(animalType: string): Promise<{id: number, name: string, description: string, animalType: string}[]> {
     try {
-      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>(`/breeds/by-animal-type/${animalType}`);
+      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>(`/api/breeds/by-animal-type/${animalType}`);
       
       if (response.error) {
         console.error('Error getting breeds by animal type:', response.error);
@@ -223,40 +223,23 @@ class PetService {
   }
 
   // Evcil hayvan ekleme (backend endpoint'i gerekecek)
-  async addPet(petData: Omit<Pet, 'id' | 'createdAt'> & { selectedBreed?: {id: number, name: string} }): Promise<Pet> {
+  async addPet(petData: Omit<Pet, 'id' | 'createdAt'>): Promise<Pet> {
     try {
       console.log('🐾 addPet metodu çağrıldı');
       console.log('📝 Gönderilecek pet verisi:', JSON.stringify(petData, null, 2));
-      console.log('🌐 API endpoint: /pets');
+      console.log('🌐 API endpoint: /api/pets');
       
       // Backend'in beklediği format için animalType string'ini alıyoruz
-      const animalType = ANIMAL_TYPE_CODES[petData.species.toLowerCase() as keyof typeof ANIMAL_TYPE_CODES];
-      
-      // Breed ID'yi selectedBreed objesinden alıyoruz
-      let breedId: number | undefined;
-      if (petData.selectedBreed) {
-        breedId = petData.selectedBreed.id;
-      } else {
-        // Fallback olarak eski mapping'i kullan
-        breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
-      }
-      
-      console.log('🔍 DEBUG - species:', petData.species);
-      console.log('🔍 DEBUG - species.toLowerCase():', petData.species.toLowerCase());
-      console.log('🔍 DEBUG - animalType found:', animalType);
-      console.log('🔍 DEBUG - breed:', petData.breed);
-      console.log('🔍 DEBUG - selectedBreed:', petData.selectedBreed);
-      console.log('🔍 DEBUG - breedId found:', breedId);
+      const animalType = ANIMAL_TYPE_CODES[petData.species as keyof typeof ANIMAL_TYPE_CODES];
+      const breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
       
       if (!animalType) {
         console.error('❌ Geçersiz hayvan türü:', petData.species);
-        console.error('💡 Mevcut türler:', Object.keys(ANIMAL_TYPE_CODES));
         throw new Error(`Geçersiz hayvan türü: ${petData.species}`);
       }
       
       if (!breedId) {
         console.error('❌ Geçersiz cins:', petData.breed);
-        console.error('💡 Mevcut cinsler:', Object.keys(BREED_IDS));
         throw new Error(`Geçersiz cins: ${petData.breed}`);
       }
       
@@ -272,7 +255,7 @@ class PetService {
       
       console.log('🔄 Backend formatında veri:', JSON.stringify(backendFormat, null, 2));
       
-      const response = await apiClient.post<Pet>('/pets', backendFormat);
+      const response = await apiClient.post<Pet>('/api/pets', backendFormat);
       console.log('📡 API yanıtı:', JSON.stringify(response, null, 2));
       
       if (!response.error && response.data) {

@@ -12,14 +12,13 @@ class ApiClient {
   private async getAuthHeaders(): Promise<HeadersInit> {
     try {
       const token = await AsyncStorage.getItem('token');
-      console.log('🔑 Token alınıyor:', token ? `${token.substring(0, 20)}...` : 'Token yok');
       
       return {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : '',
       };
     } catch (error) {
-      console.error('❌ Auth headers hatası:', error);
+      console.error('Error getting auth headers:', error);
       return {
         'Content-Type': 'application/json',
       };

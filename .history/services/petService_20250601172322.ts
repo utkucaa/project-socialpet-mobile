@@ -68,20 +68,6 @@ const ANIMAL_TYPE_IDS = {
   'iguana': 10
 };
 
-// Hayvan türü ID'lerinden string kodlara mapping
-const ANIMAL_TYPE_CODES = {
-  'köpek': 'DOG',
-  'kedi': 'CAT', 
-  'kuş': 'BIRD',
-  'balık': 'FISH',
-  'tavşan': 'RABBIT',
-  'hamster': 'HAMSTER',
-  'yılan': 'SNAKE',
-  'tavuk': 'CHICKEN',
-  'kaplumbağa': 'TURTLE',
-  'iguana': 'IGUANA'
-};
-
 const BREED_IDS = {
   // Köpek cinsleri
   'Labrador Retriever': 1,
@@ -137,57 +123,6 @@ const BREED_IDS = {
 };
 
 class PetService {
-  // 🐾 Hayvan türlerini listeleme
-  async getAnimalTypes(): Promise<{code: string, name: string}[]> {
-    try {
-      const response = await apiClient.get<{code: string, name: string}[]>('/pets/animal-types');
-      
-      if (response.error) {
-        console.error('Error getting animal types:', response.error);
-        throw new Error(response.error);
-      }
-      
-      return response.data || [];
-    } catch (error) {
-      console.error('Error getting animal types:', error);
-      return [];
-    }
-  }
-
-  // 🐾 Tüm cinslerı listeleme
-  async getAllBreeds(): Promise<{id: number, name: string, description: string, animalType: string}[]> {
-    try {
-      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>('/breeds');
-      
-      if (response.error) {
-        console.error('Error getting all breeds:', response.error);
-        throw new Error(response.error);
-      }
-      
-      return response.data || [];
-    } catch (error) {
-      console.error('Error getting all breeds:', error);
-      return [];
-    }
-  }
-
-  // 🐾 Belirli hayvan türüne göre cinslerı listeleme
-  async getBreedsByAnimalType(animalType: string): Promise<{id: number, name: string, description: string, animalType: string}[]> {
-    try {
-      const response = await apiClient.get<{id: number, name: string, description: string, animalType: string}[]>(`/breeds/by-animal-type/${animalType}`);
-      
-      if (response.error) {
-        console.error('Error getting breeds by animal type:', response.error);
-        throw new Error(response.error);
-      }
-      
-      return response.data || [];
-    } catch (error) {
-      console.error('Error getting breeds by animal type:', error);
-      return [];
-    }
-  }
-
   // 🐾 Kullanıcının evcil hayvanlarını getirme
   async getUserPets(userId: number): Promise<Pet[]> {
     try {
@@ -223,51 +158,35 @@ class PetService {
   }
 
   // Evcil hayvan ekleme (backend endpoint'i gerekecek)
-  async addPet(petData: Omit<Pet, 'id' | 'createdAt'> & { selectedBreed?: {id: number, name: string} }): Promise<Pet> {
+  async addPet(petData: Omit<Pet, 'id' | 'createdAt'>): Promise<Pet> {
     try {
       console.log('🐾 addPet metodu çağrıldı');
       console.log('📝 Gönderilecek pet verisi:', JSON.stringify(petData, null, 2));
       console.log('🌐 API endpoint: /pets');
       
-      // Backend'in beklediği format için animalType string'ini alıyoruz
-      const animalType = ANIMAL_TYPE_CODES[petData.species.toLowerCase() as keyof typeof ANIMAL_TYPE_CODES];
+      // Backend'in beklediği format için ID'leri alıyoruz
+      const animalTypeId = ANIMAL_TYPE_IDS[petData.species as keyof typeof ANIMAL_TYPE_IDS];
+      const breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
       
-      // Breed ID'yi selectedBreed objesinden alıyoruz
-      let breedId: number | undefined;
-      if (petData.selectedBreed) {
-        breedId = petData.selectedBreed.id;
-      } else {
-        // Fallback olarak eski mapping'i kullan
-        breedId = BREED_IDS[petData.breed as keyof typeof BREED_IDS];
-      }
-      
-      console.log('🔍 DEBUG - species:', petData.species);
-      console.log('🔍 DEBUG - species.toLowerCase():', petData.species.toLowerCase());
-      console.log('🔍 DEBUG - animalType found:', animalType);
-      console.log('🔍 DEBUG - breed:', petData.breed);
-      console.log('🔍 DEBUG - selectedBreed:', petData.selectedBreed);
-      console.log('🔍 DEBUG - breedId found:', breedId);
-      
-      if (!animalType) {
+      if (!animalTypeId) {
         console.error('❌ Geçersiz hayvan türü:', petData.species);
-        console.error('💡 Mevcut türler:', Object.keys(ANIMAL_TYPE_CODES));
         throw new Error(`Geçersiz hayvan türü: ${petData.species}`);
       }
       
       if (!breedId) {
         console.error('❌ Geçersiz cins:', petData.breed);
-        console.error('💡 Mevcut cinsler:', Object.keys(BREED_IDS));
         throw new Error(`Geçersiz cins: ${petData.breed}`);
       }
       
-      // Backend'in beklediği formatı hazırlayalım (endpoint dökümantasyonuna göre)
+      // Backend'in beklediği formatı hazırlayalım
       const backendFormat = {
         name: petData.name,
         age: petData.age,
         gender: petData.gender,
-        animalType: animalType,  // animalTypeId değil animalType string olarak
+        animalTypeId: animalTypeId,
         breedId: breedId,
-        ownerId: petData.ownerId
+        ownerId: petData.ownerId,
+        imageUrl: petData.imageUrl
       };
       
       console.log('🔄 Backend formatında veri:', JSON.stringify(backendFormat, null, 2));

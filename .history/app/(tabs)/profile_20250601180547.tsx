@@ -651,12 +651,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
-                style={styles.modalScrollView} 
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled={true}
-                bounces={false}
-              >
+              <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
                 {/* Photo Section */}
                 <View style={styles.modalPhotoSection}>
                   <TouchableOpacity style={styles.modalPhotoButton} onPress={pickImage}>

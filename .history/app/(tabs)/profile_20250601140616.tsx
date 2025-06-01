@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import adoptionService from '../../services/adoptionService';
 import lostPetService from '../../services/lostPetService';
-import petService, { Pet } from '../../services/petService';
+import petService, { ANIMAL_SPECIES, Pet } from '../../services/petService';
 
 const { width } = Dimensions.get('window');
 
@@ -77,7 +77,6 @@ export default function ProfileScreen() {
   const [petGender, setPetGender] = useState<'erkek' | 'dişi'>('erkek');
   const [petSpecies, setPetSpecies] = useState('');
   const [petBreed, setPetBreed] = useState('');
-  const [selectedBreed, setSelectedBreed] = useState<{id: number, name: string} | null>(null);
   const [petImageUri, setPetImageUri] = useState<string | null>(null);
 
   // Dropdown states
@@ -85,14 +84,8 @@ export default function ProfileScreen() {
   const [showSpeciesDropdown, setShowSpeciesDropdown] = useState(false);
   const [showBreedDropdown, setShowBreedDropdown] = useState(false);
 
-  // API data states
-  const [animalTypes, setAnimalTypes] = useState<{code: string, name: string}[]>([]);
-  const [availableBreeds, setAvailableBreeds] = useState<{id: number, name: string, description: string, animalType: string}[]>([]);
-  const [loadingAnimalTypes, setLoadingAnimalTypes] = useState(false);
-  const [loadingBreeds, setLoadingBreeds] = useState(false);
-
-  // Computed values (statik artık kullanmıyoruz)
-  // const availableBreeds = (petSpecies && ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES]) || [];
+  // Computed values
+  const availableBreeds = (petSpecies && ANIMAL_SPECIES[petSpecies as keyof typeof ANIMAL_SPECIES]) || [];
 
   const router = useRouter();
 
@@ -126,14 +119,11 @@ export default function ProfileScreen() {
   // Set initial breed when species changes
   useEffect(() => {
     if (availableBreeds && Array.isArray(availableBreeds) && availableBreeds.length > 0) {
-      const firstBreed = availableBreeds[0];
-      setPetBreed(firstBreed.name);
-      setSelectedBreed({ id: firstBreed.id, name: firstBreed.name });
+      setPetBreed(availableBreeds[0]);
     } else {
       setPetBreed('');
-      setSelectedBreed(null);
     }
-  }, [availableBreeds]);
+  }, [petSpecies]);
 
   const loadUserData = async () => {
     try {
@@ -215,47 +205,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // Hayvan türlerini yükle
-  const loadAnimalTypes = async () => {
-    try {
-      setLoadingAnimalTypes(true);
-      const types = await petService.getAnimalTypes();
-      setAnimalTypes(types);
-      console.log('🐾 Hayvan türleri yüklendi:', types);
-    } catch (error) {
-      console.error('Error loading animal types:', error);
-    } finally {
-      setLoadingAnimalTypes(false);
-    }
-  };
-
-  // Seçili hayvan türüne göre cinslerini yükle
-  const loadBreedsByAnimalType = async (animalType: string) => {
-    try {
-      setLoadingBreeds(true);
-      const breeds = await petService.getBreedsByAnimalType(animalType);
-      setAvailableBreeds(breeds);
-      console.log('🐾 Cinsler yüklendi:', breeds);
-      
-      // İlk cinsi otomatik seç
-      if (breeds.length > 0) {
-        const firstBreed = breeds[0];
-        setPetBreed(firstBreed.name);
-        setSelectedBreed({ id: firstBreed.id, name: firstBreed.name });
-      } else {
-        setPetBreed('');
-        setSelectedBreed(null);
-      }
-    } catch (error) {
-      console.error('Error loading breeds:', error);
-      setAvailableBreeds([]);
-      setPetBreed('');
-      setSelectedBreed(null);
-    } finally {
-      setLoadingBreeds(false);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('token');
@@ -288,9 +237,6 @@ export default function ProfileScreen() {
     resetForm();
     setShowAddPetModal(true);
     console.log('Modal should be open:', true);
-    
-    // Modal açıldığında hayvan türlerini yükle
-    loadAnimalTypes();
   };
 
   const resetForm = () => {
@@ -299,7 +245,6 @@ export default function ProfileScreen() {
     setPetGender('erkek');
     setPetSpecies('');
     setPetBreed(''); // Start empty since no species selected
-    setSelectedBreed(null);
     setPetImageUri(null);
     // Close all dropdowns
     setShowGenderDropdown(false);
@@ -339,21 +284,15 @@ export default function ProfileScreen() {
   const selectSpecies = (species: string) => {
     setPetSpecies(species);
     setShowSpeciesDropdown(false);
-    
-    // Seçilen türe göre API'dan cinslerini yükle
-    const selectedAnimalType = animalTypes.find(type => type.name === species);
-    if (selectedAnimalType) {
-      loadBreedsByAnimalType(selectedAnimalType.code);
-    } else {
-      setAvailableBreeds([]);
-      setPetBreed('');
+    // Set first breed of selected species
+    const speciesBreeds = ANIMAL_SPECIES[species as keyof typeof ANIMAL_SPECIES];
+    if (speciesBreeds && speciesBreeds.length > 0) {
+      setPetBreed(speciesBreeds[0]);
     }
   };
 
-  const selectBreed = (breedName: string) => {
-    const selectedBreedObj = availableBreeds.find(breed => breed.name === breedName);
-    setPetBreed(breedName);
-    setSelectedBreed(selectedBreedObj ? { id: selectedBreedObj.id, name: selectedBreedObj.name } : null);
+  const selectBreed = (breed: string) => {
+    setPetBreed(breed);
     setShowBreedDropdown(false);
   };
 
@@ -383,10 +322,6 @@ export default function ProfileScreen() {
   };
 
   const handleSubmitPet = async () => {
-    console.log('🔵 handleSubmitPet başladı');
-    console.log('userData:', userData);
-    console.log('userData.id:', userData?.id);
-    
     // Form validation
     if (!petName.trim()) {
       Alert.alert('Hata', 'Lütfen hayvanın ismini girin.');
@@ -403,7 +338,7 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (!petBreed.trim() || !selectedBreed) {
+    if (!petBreed.trim()) {
       Alert.alert('Hata', 'Lütfen cinsi seçin.');
       return;
     }
@@ -413,44 +348,30 @@ export default function ProfileScreen() {
       return;
     }
 
-    if (!userData.id) {
-      Alert.alert('Hata', 'Kullanıcı ID bilgisi eksik. Lütfen tekrar giriş yapın.');
-      return;
-    }
-
     try {
       setModalLoading(true);
 
-      const petData = {
+      const petData: Omit<Pet, 'id' | 'createdAt'> = {
         name: petName.trim(),
         age: Number(petAge),
         gender: petGender,
         species: petSpecies,
         breed: petBreed,
-        selectedBreed: selectedBreed, // Seçilen breed objesini gönder
         imageUrl: petImageUri || undefined,
         ownerId: userData.id
       };
 
-      console.log('📝 Gönderilecek pet verisi:', petData);
-
-      const newPet = await petService.addPet(petData);
-      console.log('✅ Yeni pet eklendi:', newPet);
+      await petService.addPet(petData);
       
-      // Modal'ı kapat ve formu sıfırla
-      closeModal();
       
       // Evcil hayvanlar sekmesine geç
       setActiveTab('pets');
-      
-      // Pet listesini yeniden yükle
-      await loadUserPets();
 
       Alert.alert('Başarılı!', 'Evcil hayvanınız başarıyla eklendi.');
 
     } catch (error) {
-      console.error('💥 Error adding pet:', error);
-      Alert.alert('Hata', 'Evcil hayvan eklenirken bir hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      console.error('Error adding pet:', error);
+      Alert.alert('Hata', 'Evcil hayvan eklenirken bir hata oluştu.');
     } finally {
       setModalLoading(false);
     }
@@ -651,12 +572,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              <ScrollView 
-                style={styles.modalScrollView} 
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled={true}
-                bounces={false}
-              >
+              <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
                 {/* Photo Section */}
                 <View style={styles.modalPhotoSection}>
                   <TouchableOpacity style={styles.modalPhotoButton} onPress={pickImage}>
@@ -699,7 +615,7 @@ export default function ProfileScreen() {
                   </View>
 
                   {/* Gender */}
-                  <View style={[styles.modalInputGroup, { zIndex: 3000 }]}>
+                  <View style={styles.modalInputGroup}>
                     <Text style={styles.modalLabel}>Cinsiyet *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 
@@ -732,7 +648,7 @@ export default function ProfileScreen() {
                   </View>
 
                   {/* Species */}
-                  <View style={[styles.modalInputGroup, { zIndex: 2000 }]}>
+                  <View style={styles.modalInputGroup}>
                     <Text style={styles.modalLabel}>Hayvan Türü *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 
@@ -747,14 +663,14 @@ export default function ProfileScreen() {
                       
                       {showSpeciesDropdown && (
                         <View style={styles.modalDropdownMenu}>
-                          {animalTypes.map((type) => (
+                          {Object.keys(ANIMAL_SPECIES).map((speciesKey) => (
                             <TouchableOpacity 
-                              key={type.code}
+                              key={speciesKey}
                               style={styles.modalDropdownItem} 
-                              onPress={() => selectSpecies(type.name)}
+                              onPress={() => selectSpecies(speciesKey)}
                             >
                               <Text style={styles.modalDropdownItemText}>
-                                {type.name.charAt(0).toUpperCase() + type.name.slice(1)}
+                                {speciesKey.charAt(0).toUpperCase() + speciesKey.slice(1)}
                               </Text>
                             </TouchableOpacity>
                           ))}
@@ -764,7 +680,7 @@ export default function ProfileScreen() {
                   </View>
 
                   {/* Breed */}
-                  <View style={[styles.modalInputGroup, { zIndex: 1000 }]}>
+                  <View style={styles.modalInputGroup}>
                     <Text style={styles.modalLabel}>Cinsi *</Text>
                     <View style={styles.modalDropdownContainer}>
                       <TouchableOpacity 
@@ -780,13 +696,13 @@ export default function ProfileScreen() {
                       
                       {showBreedDropdown && petSpecies && (
                         <View style={styles.modalDropdownMenu}>
-                          {availableBreeds.map((breedItem: {id: number, name: string, description: string, animalType: string}) => (
+                          {availableBreeds.map((breedItem: string) => (
                             <TouchableOpacity 
-                              key={breedItem.id}
+                              key={breedItem}
                               style={styles.modalDropdownItem} 
-                              onPress={() => selectBreed(breedItem.name)}
+                              onPress={() => selectBreed(breedItem)}
                             >
-                              <Text style={styles.modalDropdownItemText}>{breedItem.name}</Text>
+                              <Text style={styles.modalDropdownItemText}>{breedItem}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
@@ -1423,7 +1339,6 @@ const styles = StyleSheet.create({
   },
   modalInputGroup: {
     marginBottom: 20,
-    position: 'relative',
   },
   modalLabel: {
     fontSize: 16,
@@ -1484,7 +1399,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
-    maxHeight: 200,
   },
   modalDropdownItem: {
     paddingVertical: 12,
