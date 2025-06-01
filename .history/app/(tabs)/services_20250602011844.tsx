@@ -93,240 +93,50 @@ const loadCityData = async (): Promise<City[]> => {
   }
 };
 
-// API service functions
-// API Base URL Configuration
-const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:8080'  // Development
-  : 'https://your-production-api.com';  // Production
-
-console.log('🔧 API Base URL:', API_BASE_URL);
-
-const fetchBusinessesByLocation = async (
-  type: 'Veteriner' | 'Petshop',
-  city: string,
-  district?: string
-): Promise<Business[]> => {
-  try {
-    console.log(`🔍 API Çağrısı: ${type} aranıyor - ${city}, ${district}`);
-    
-    const params = new URLSearchParams();
-    params.append('city', city);
-    params.append('radius', '5000');
-    
-    if (district) {
-      params.append('district', district);
-    }
-    
-    // API type mapping
-    const apiType = type === 'Veteriner' ? 'veterinary_care' : 'pet_store';
-    params.append('type', apiType);
-    
-    const url = `${API_BASE_URL}/api/v1/places/nearby-by-location?${params.toString()}`;
-    console.log('🌐 API URL:', url);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('Bu bölgede işletme bulunamadı.');
-      } else if (response.status === 500) {
-        throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
-      } else if (response.status === 429) {
-        throw new Error('Çok fazla istek gönderildi. Lütfen biraz bekleyin.');
-      } else {
-        throw new Error(`Bağlantı hatası: ${response.status}`);
+const mockBusinesses: Business[] = [
+  {
+    place_id: '1',
+    name: 'Sevimli Dostlar Veteriner Kliniği',
+    type: 'Veteriner',
+    rating: 4.5,
+    vicinity: 'Beşiktaş, İstanbul',
+    city: 'İstanbul',
+    district: 'BEŞIKTAŞ',
+    formatted_phone_number: '+90 212 123 45 67',
+    mainPhotoUrl: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&h=600&fit=crop',
+    opening_hours: {
+      open_now: true,
+      weekday_text: ['Pazartesi: 09:00-18:00', 'Salı: 09:00-18:00']
+    },
+    services: ['Genel Muayene', 'Aşı', 'Ameliyat'],
+    reviews: [
+      {
+        id: '1',
+        author_name: 'Ahmet Yılmaz',
+        rating: 5,
+        text: 'Çok ilgili ve deneyimli veteriner. Kedimizi çok iyi tedavi ettiler.',
+        time: Date.now() / 1000,
+        profile_photo_url: 'https://via.placeholder.com/50x50'
       }
-    }
-    
-    const data = await response.json();
-    console.log('📦 API Response:', data);
-    
-    if (data.status === 'ZERO_RESULTS') {
-      console.log('⚠️ Sonuç bulunamadı');
-      return [];
-    }
-    
-    if (data.status !== 'OK') {
-      throw new Error(`API hatası: ${data.status}`);
-    }
-    
-    if (!data.results || data.results.length === 0) {
-      console.log('⚠️ Sonuç bulunamadı');
-      return [];
-    }
-    
-    return data.results.map((place: any) => transformPlaceData(place, type));
-  } catch (error) {
-    console.error('❌ Error fetching businesses:', error);
-    
-    if (error instanceof TypeError && error.message.includes('Network request failed')) {
-      throw new Error('İnternet bağlantınızı kontrol edin.');
-    }
-    
-    if (error instanceof Error) {
-      throw error; // Re-throw our custom errors
-    }
-    
-    throw new Error('Beklenmedik bir hata oluştu. Lütfen tekrar deneyin.');
+    ]
+  },
+  {
+    place_id: '2',
+    name: 'Pati Pet Shop',
+    type: 'Petshop',
+    rating: 4.2,
+    vicinity: 'Şişli, İstanbul',
+    city: 'İstanbul',
+    district: 'ŞİŞLİ',
+    formatted_phone_number: '+90 212 987 65 43',
+    mainPhotoUrl: 'https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&h=600&fit=crop',
+    opening_hours: {
+      open_now: false,
+      weekday_text: ['Pazartesi: 10:00-20:00', 'Salı: 10:00-20:00']
+    },
+    services: ['Kedi Maması', 'Köpek Maması', 'Oyuncaklar', 'Bakım Ürünleri'],
   }
-};
-
-const fetchPlaceDetails = async (placeId: string): Promise<Business | null> => {
-  try {
-    console.log(`🔍 Place details alınıyor: ${placeId}`);
-    
-    const url = `${API_BASE_URL}/api/v1/places/details?placeId=${placeId}`;
-    console.log('🌐 Details URL:', url);
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error('İşletme detayları bulunamadı.');
-      } else if (response.status === 500) {
-        throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
-      } else {
-        throw new Error(`Bağlantı hatası: ${response.status}`);
-      }
-    }
-    
-    const data = await response.json();
-    console.log('📦 Details Response:', data);
-    
-    if (data.status !== 'OK') {
-      console.log('⚠️ Details bulunamadı:', data.status);
-      return null;
-    }
-    
-    return transformPlaceDetailData(data.result);
-  } catch (error) {
-    console.error('❌ Error fetching place details:', error);
-    
-    if (error instanceof TypeError && error.message.includes('Network request failed')) {
-      console.log('🌐 Network error for place details');
-      return null; // Don't throw for details, just return null
-    }
-    
-    // For place details, we don't throw errors, just return null
-    // The UI will continue with the basic info
-    return null;
-  }
-};
-
-// Helper function to transform place data
-const transformPlaceData = (place: any, businessType: 'Veteriner' | 'Petshop'): Business => {
-  console.log('🔄 Transform place data:', place.name);
-  
-  // Determine the business type based on types array or parameter
-  let type: 'Veteriner' | 'Petshop';
-  if (place.types && place.types.includes('veterinary_care')) {
-    type = 'Veteriner';
-  } else if (place.types && place.types.includes('pet_store')) {
-    type = 'Petshop';
-  } else {
-    type = businessType;
-  }
-
-  // Extract city and district from vicinity
-  const addressParts = place.vicinity ? place.vicinity.split(', ') : [];
-  const district = addressParts.length > 1 ? addressParts[addressParts.length - 2] : '';
-  const city = addressParts.length > 0 ? addressParts[addressParts.length - 1] : '';
-
-  // Create a placeholder image URL if no photos are available
-  const mainPhotoUrl = place.photos && place.photos.length > 0
-    ? `${API_BASE_URL}/api/v1/places/photo?photoReference=${place.photos[0].photo_reference}&maxWidth=800`
-    : 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&h=600&fit=crop';
-
-  return {
-    place_id: place.place_id,
-    name: place.name,
-    type,
-    rating: place.rating || 0,
-    vicinity: place.vicinity || '',
-    city,
-    district,
-    location: place.geometry?.location,
-    opening_hours: place.opening_hours,
-    mainPhotoUrl,
-  };
-};
-
-// Helper function to transform place detail data
-const transformPlaceDetailData = (place: any): Business => {
-  console.log('🔄 Transform place detail data:', place.name);
-  
-  // Extract city and district from formatted address
-  const addressParts = place.formatted_address ? place.formatted_address.split(', ') : [];
-  const district = addressParts.length > 1 ? addressParts[addressParts.length - 3] : '';
-  const city = addressParts.length > 2 ? addressParts[addressParts.length - 2] : '';
-
-  // Determine the business type based on types array
-  let type: 'Veteriner' | 'Petshop';
-  if (place.types && place.types.includes('veterinary_care')) {
-    type = 'Veteriner';
-  } else {
-    type = 'Petshop';
-  }
-
-  // Create service categories based on available types
-  const services = place.types
-    ? place.types
-        .filter((t: string) => !['point_of_interest', 'establishment', 'health', 'store'].includes(t))
-        .map((t: string) => {
-          switch (t) {
-            case 'veterinary_care':
-              return 'Veteriner Hizmetleri';
-            case 'pet_store':
-              return 'Evcil Hayvan Ürünleri';
-            default:
-              return t.replace('_', ' ');
-          }
-        })
-    : [];
-
-  // Create a photos array with URLs
-  const photos = place.photos
-    ? place.photos.map((photo: Photo) => ({
-        ...photo,
-        url: `${API_BASE_URL}/api/v1/places/photo?photoReference=${photo.photo_reference}&maxWidth=800`,
-      }))
-    : [];
-
-  // Create a mainPhotoUrl
-  const mainPhotoUrl = photos.length > 0
-    ? photos[0].url
-    : 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800&h=600&fit=crop';
-
-  return {
-    place_id: place.place_id,
-    name: place.name,
-    type,
-    rating: place.rating || 0,
-    vicinity: place.vicinity || '',
-    formatted_address: place.formatted_address,
-    city,
-    district,
-    formatted_phone_number: place.formatted_phone_number,
-    international_phone_number: place.international_phone_number,
-    location: place.geometry?.location,
-    opening_hours: place.opening_hours,
-    services,
-    reviews: place.reviews || [],
-    website: place.website,
-    photos,
-    mainPhotoUrl,
-  };
-};
+];
 
 export default function ServicesScreen() {
   const [selectedType, setSelectedType] = useState<'Veteriner' | 'Petshop'>('Veteriner');
@@ -391,48 +201,108 @@ export default function ServicesScreen() {
       return;
     }
 
-    console.log(`🔍 Arama başlatıldı: ${selectedType} - ${selectedCity}, ${selectedDistrict}`);
-
     setSearchInitiated(true);
     setIsLoading(true);
     setError(null);
 
     try {
-      const filteredBusinesses = await fetchBusinessesByLocation(selectedType, selectedCity, selectedDistrict);
+      // For now, using mock data - replace with actual API call later
+      const filteredBusinesses = mockBusinesses.filter(
+        business => 
+          business.type === selectedType &&
+          business.city === selectedCity &&
+          business.district === selectedDistrict
+      );
       
-      console.log(`✅ ${filteredBusinesses.length} işletme bulundu`);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setBusinesses(filteredBusinesses);
     } catch (err) {
-      console.error('❌ Error fetching businesses:', err);
-      const errorMessage = err instanceof Error ? err.message : 'İşletme verileri yüklenirken bir hata oluştu.';
-      setError(errorMessage);
+      console.error('Error fetching businesses:', err);
+      setError('İşletme verileri yüklenirken bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBusinessPress = async (business: Business) => {
-    console.log('📱 İşletme kartına tıklandı:', business.name);
-    
+  const handleBusinessPress = (business: Business) => {
     setSelectedBusiness(business);
     setShowBusinessDetail(true);
-    
-    // Fetch detailed information in the background
-    try {
-      const detailedBusiness = await fetchPlaceDetails(business.place_id);
-      if (detailedBusiness) {
-        console.log('✅ Detaylı bilgi alındı:', detailedBusiness.name);
-        setSelectedBusiness(detailedBusiness);
-      }
-    } catch (error) {
-      console.error('⚠️ Detaylı bilgi alınamadı:', error);
-      // Continue with the basic business info we already have
-    }
   };
 
   const handlePhonePress = (phoneNumber: string) => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
+
+  const renderBusinessCard = ({ item }: { item: Business }) => (
+    <TouchableOpacity 
+      style={styles.businessCard}
+      onPress={() => handleBusinessPress(item)}
+    >
+      <Image 
+        source={{ uri: item.mainPhotoUrl || 'https://via.placeholder.com/300x200' }}
+        style={styles.businessImage}
+      />
+      <View style={styles.businessTypeTag}>
+        <Text style={styles.businessTypeText}>{item.type}</Text>
+      </View>
+      
+      <View style={styles.businessInfo}>
+        <View style={styles.businessHeader}>
+          <Text style={styles.businessName}>{item.name}</Text>
+          {item.rating > 0 && (
+            <View style={styles.ratingContainer}>
+              <Text style={styles.starIcon}>⭐</Text>
+              <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+            </View>
+          )}
+        </View>
+        
+        {item.opening_hours?.open_now !== undefined && (
+          <Text style={[styles.statusText, item.opening_hours.open_now ? styles.openText : styles.closedText]}>
+            {item.opening_hours.open_now ? 'Şu anda açık' : 'Kapalı'}
+          </Text>
+        )}
+        
+        <View style={styles.locationContainer}>
+          <Text style={styles.locationIcon}>📍</Text>
+          <Text style={styles.locationText}>
+            {item.district ? `${item.district}, ${item.city}` : item.vicinity}
+          </Text>
+        </View>
+        
+        {item.formatted_phone_number && (
+          <TouchableOpacity 
+            style={styles.phoneContainer}
+            onPress={() => handlePhonePress(item.formatted_phone_number!)}
+          >
+            <Text style={styles.phoneIcon}>📞</Text>
+            <Text style={styles.phoneText}>{item.formatted_phone_number}</Text>
+          </TouchableOpacity>
+        )}
+        
+        {item.services && item.services.length > 0 && (
+          <View style={styles.servicesContainer}>
+            {item.services.slice(0, 3).map((service, index) => (
+              <View key={index} style={styles.serviceTag}>
+                <Text style={styles.serviceTagText}>{service}</Text>
+              </View>
+            ))}
+            {item.services.length > 3 && (
+              <View style={styles.serviceTag}>
+                <Text style={styles.serviceTagText}>+{item.services.length - 3}</Text>
+              </View>
+            )}
+          </View>
+        )}
+        
+        <View style={styles.detailButton}>
+          <Text style={styles.detailButtonText}>Detayları Gör</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   const renderBusinessDetail = () => {
     if (!selectedBusiness) return null;
@@ -560,184 +430,115 @@ export default function ServicesScreen() {
         <Text style={styles.headerSubtitle}>Size en yakın veteriner ve petshopları keşfedin</Text>
       </View>
       
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* Search Section */}
-        <View style={styles.searchSection}>
-          {/* İşletme Tipi Picker */}
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.filterLabel}>İşletme Tipi</Text>
-            <View style={styles.pickerContainer}>
-              <TouchableOpacity 
-                style={styles.picker}
-                onPress={() => setShowTypeDropdown(true)}
-              >
-                <Text style={styles.pickerText}>{selectedType}</Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Search Section */}
+      <View style={styles.searchSection}>
+        {/* İşletme Tipi Picker */}
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.filterLabel}>İşletme Tipi</Text>
+          <View style={styles.pickerContainer}>
+            <TouchableOpacity 
+              style={styles.picker}
+              onPress={() => setShowTypeDropdown(true)}
+            >
+              <Text style={styles.pickerText}>{selectedType}</Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
           </View>
-          
-          {/* Şehir Picker */}
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.filterLabel}>Şehir</Text>
-            <View style={[styles.pickerContainer, citiesLoading && styles.pickerDisabled]}>
-              <TouchableOpacity 
-                style={styles.picker}
-                onPress={() => !citiesLoading && setShowCityDropdown(true)}
-                disabled={citiesLoading}
-              >
-                <Text style={styles.pickerText}>{selectedCity || 'Şehir Seçiniz'}</Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          {/* İlçe Picker */}
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.filterLabel}>İlçe</Text>
-            <View style={[styles.pickerContainer, (!selectedCity || citiesLoading) && styles.pickerDisabled]}>
-              <TouchableOpacity 
-                style={styles.picker}
-                onPress={() => selectedCity && !citiesLoading && setShowDistrictDropdown(true)}
-                disabled={!selectedCity || citiesLoading}
-              >
-                <Text style={styles.pickerText}>{selectedDistrict || 'İlçe Seçiniz'}</Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          {/* Search Button */}
-          <TouchableOpacity 
-            style={[styles.searchButton, (!selectedCity || !selectedDistrict) && styles.searchButtonDisabled]}
-            onPress={handleSearch}
-            disabled={!selectedCity || !selectedDistrict}
-          >
-            <Text style={styles.searchButtonText}>🔍 Ara</Text>
-          </TouchableOpacity>
         </View>
         
-        {/* Results Section */}
+        {/* Şehir Picker */}
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.filterLabel}>Şehir</Text>
+          <View style={[styles.pickerContainer, citiesLoading && styles.pickerDisabled]}>
+            <TouchableOpacity 
+              style={styles.picker}
+              onPress={() => !citiesLoading && setShowCityDropdown(true)}
+              disabled={citiesLoading}
+            >
+              <Text style={styles.pickerText}>{selectedCity || 'Şehir Seçiniz'}</Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* İlçe Picker */}
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.filterLabel}>İlçe</Text>
+          <View style={[styles.pickerContainer, (!selectedCity || citiesLoading) && styles.pickerDisabled]}>
+            <TouchableOpacity 
+              style={styles.picker}
+              onPress={() => selectedCity && !citiesLoading && setShowDistrictDropdown(true)}
+              disabled={!selectedCity || citiesLoading}
+            >
+              <Text style={styles.pickerText}>{selectedDistrict || 'İlçe Seçiniz'}</Text>
+              <Text style={styles.dropdownArrow}>▼</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Search Button */}
+        <TouchableOpacity 
+          style={[styles.searchButton, (!selectedCity || !selectedDistrict) && styles.searchButtonDisabled]}
+          onPress={handleSearch}
+          disabled={!selectedCity || !selectedDistrict}
+        >
+          <Text style={styles.searchButtonText}>🔍 Ara</Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Results Section */}
+      <View style={styles.resultsSection}>
         {searchInitiated && (
-          <View style={styles.resultsSection}>
-            <View style={styles.resultsHeader}>
-              <Text style={styles.resultsTitle}>
-                {isLoading ? 'Yükleniyor...' : `${businesses.length} sonuç bulundu`}
-              </Text>
-              <Text style={styles.resultsSubtitle}>
-                {selectedCity && `${selectedCity}`}
-                {selectedDistrict && `, ${selectedDistrict}`}
-                {` - ${selectedType}`}
-              </Text>
-            </View>
-            
-            {error && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            )}
-            
-            {isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#8B5CF6" />
-              </View>
-            )}
-            
-            {!isLoading && businesses.length === 0 && !error && (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>🔍</Text>
-                <Text style={styles.emptyTitle}>Sonuç Bulunamadı</Text>
-                <Text style={styles.emptyText}>Lütfen farklı bir şehir veya işletme tipi seçin.</Text>
-              </View>
-            )}
-            
-            {!isLoading && businesses.length > 0 && (
-              <View style={styles.businessListContainer}>
-                {businesses.map((business) => (
-                  <TouchableOpacity 
-                    key={business.place_id}
-                    style={styles.businessCard}
-                    onPress={() => handleBusinessPress(business)}
-                  >
-                    <Image 
-                      source={{ uri: business.mainPhotoUrl || 'https://via.placeholder.com/300x200' }}
-                      style={styles.businessImage}
-                    />
-                    <View style={styles.businessTypeTag}>
-                      <Text style={styles.businessTypeText}>{business.type}</Text>
-                    </View>
-                    
-                    <View style={styles.businessInfo}>
-                      <View style={styles.businessHeader}>
-                        <Text style={styles.businessName}>{business.name}</Text>
-                        {business.rating > 0 && (
-                          <View style={styles.ratingContainer}>
-                            <Text style={styles.starIcon}>⭐</Text>
-                            <Text style={styles.ratingText}>{business.rating.toFixed(1)}</Text>
-                          </View>
-                        )}
-                      </View>
-                      
-                      {business.opening_hours?.open_now !== undefined && (
-                        <Text style={[styles.statusText, business.opening_hours.open_now ? styles.openText : styles.closedText]}>
-                          {business.opening_hours.open_now ? 'Şu anda açık' : 'Kapalı'}
-                        </Text>
-                      )}
-                      
-                      <View style={styles.locationContainer}>
-                        <Text style={styles.locationIcon}>📍</Text>
-                        <Text style={styles.locationText}>
-                          {business.district ? `${business.district}, ${business.city}` : business.vicinity}
-                        </Text>
-                      </View>
-                      
-                      {business.formatted_phone_number && (
-                        <TouchableOpacity 
-                          style={styles.phoneContainer}
-                          onPress={() => handlePhonePress(business.formatted_phone_number!)}
-                        >
-                          <Text style={styles.phoneIcon}>📞</Text>
-                          <Text style={styles.phoneText}>{business.formatted_phone_number}</Text>
-                        </TouchableOpacity>
-                      )}
-                      
-                      {business.services && business.services.length > 0 && (
-                        <View style={styles.servicesContainer}>
-                          {business.services.slice(0, 3).map((service, index) => (
-                            <View key={index} style={styles.serviceTag}>
-                              <Text style={styles.serviceTagText}>{service}</Text>
-                            </View>
-                          ))}
-                          {business.services.length > 3 && (
-                            <View style={styles.serviceTag}>
-                              <Text style={styles.serviceTagText}>+{business.services.length - 3}</Text>
-                            </View>
-                          )}
-                        </View>
-                      )}
-                      
-                      <View style={styles.detailButton}>
-                        <Text style={styles.detailButtonText}>Detayları Gör</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+          <View style={styles.resultsHeader}>
+            <Text style={styles.resultsTitle}>
+              {isLoading ? 'Yükleniyor...' : `${businesses.length} sonuç bulundu`}
+            </Text>
+            <Text style={styles.resultsSubtitle}>
+              {selectedCity && `${selectedCity}`}
+              {selectedDistrict && `, ${selectedDistrict}`}
+              {` - ${selectedType}`}
+            </Text>
+          </View>
+        )}
+        
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+        
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#8B5CF6" />
+          </View>
+        )}
+        
+        {!isLoading && searchInitiated && businesses.length === 0 && !error && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔍</Text>
+            <Text style={styles.emptyTitle}>Sonuç Bulunamadı</Text>
+            <Text style={styles.emptyText}>Lütfen farklı bir şehir veya işletme tipi seçin.</Text>
           </View>
         )}
         
         {!searchInitiated && !isLoading && !error && (
-          <View style={styles.emptyStateContainer}>
+          <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>🔍</Text>
             <Text style={styles.emptyTitle}>Arama Yapınız</Text>
             <Text style={styles.emptyText}>Lütfen şehir ve ilçe seçerek arama yapınız.</Text>
           </View>
         )}
         
-        {/* Bottom padding for better scroll experience */}
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+        {!isLoading && searchInitiated && businesses.length > 0 && (
+          <FlatList
+            data={businesses}
+            renderItem={renderBusinessCard}
+            keyExtractor={(item) => item.place_id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+          />
+        )}
+      </View>
       
       {renderBusinessDetail()}
       
@@ -876,9 +677,6 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
-  scrollContainer: {
-    flex: 1,
-  },
   searchSection: {
     backgroundColor: 'white',
     margin: 16,
@@ -949,8 +747,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   resultsSection: {
+    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 20,
   },
   resultsHeader: {
     marginBottom: 16,
@@ -1003,7 +801,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
-  businessListContainer: {
+  listContainer: {
     paddingBottom: 20,
   },
   businessCard: {
@@ -1342,14 +1140,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginLeft: 8,
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  bottomPadding: {
-    height: 20,
   },
 }); 

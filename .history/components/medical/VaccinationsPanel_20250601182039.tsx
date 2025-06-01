@@ -402,7 +402,6 @@ export const VaccinationsPanel: React.FC<VaccinationsPanelProps> = ({ petId }) =
                 <TouchableOpacity
                   onPress={openDatePicker}
                   style={styles.datePickerButton}
-                  activeOpacity={0.7}
                 >
                   <Text style={[styles.datePickerButtonText, {color: vaccinationDate ? '#1f2937' : '#9CA3AF'}]}>
                     {vaccinationDate ? formatDate(vaccinationDate) : 'Tarih seçin'}

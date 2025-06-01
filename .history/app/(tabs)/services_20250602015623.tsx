@@ -949,8 +949,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   resultsSection: {
+    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 20,
   },
   resultsHeader: {
     marginBottom: 16,

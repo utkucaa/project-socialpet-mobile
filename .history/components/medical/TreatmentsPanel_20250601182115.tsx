@@ -468,221 +468,267 @@ export const TreatmentsPanel: React.FC<TreatmentsPanelProps> = ({ petId }) => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              {/* Date Picker View */}
-              {showDatePicker && (
-                <View style={styles.pickerFullContainer}>
-                  <View style={styles.pickerHeader}>
-                    <Text style={styles.pickerTitle}>Tarih Seçin</Text>
-                    <TouchableOpacity
-                      onPress={() => setShowDatePicker(false)}
-                      style={styles.pickerCloseButton}
-                    >
-                      <Text style={styles.pickerCloseText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                  
-                  <ScrollView style={styles.dateScrollContainer}>
-                    {Array.from({ length: 90 }, (_, i) => {
-                      const date = new Date();
-                      date.setDate(date.getDate() - 30 + i);
-                      const dateStr = date.toISOString().split('T')[0];
-                      const isSelected = treatmentDate === dateStr;
-                      
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          onPress={() => {
-                            console.log('Date selected:', dateStr);
-                            setTreatmentDate(dateStr);
-                            setSelectedDate(date);
-                            setShowDatePicker(false);
-                          }}
-                          style={[
-                            styles.dateOption,
-                            isSelected && styles.selectedDateOption
-                          ]}
-                        >
-                          <Text style={[
-                            styles.dateOptionText,
-                            isSelected && styles.selectedDateOptionText
-                          ]}>
-                            {date.toLocaleDateString('tr-TR', {
-                              weekday: 'long',
-                              day: '2-digit',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {editingTreatment ? 'Tedavi Kaydını Düzenle' : 'Yeni Tedavi Ekle'}
+                </Text>
+                <TouchableOpacity
+                  onPress={closeModal}
+                  style={styles.closeButton}
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <ScrollView style={styles.modalContent}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Tedavi Türü *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={treatmentType}
+                    onChangeText={setTreatmentType}
+                    placeholder="Örn: Parazit tedavisi, Diş temizliği, Cerrahi..."
+                    placeholderTextColor="#9CA3AF"
+                  />
                 </View>
-              )}
-
-              {/* Time Picker View */}
-              {showTimePicker && (
-                <View style={styles.pickerFullContainer}>
-                  <View style={styles.pickerHeader}>
-                    <Text style={styles.pickerTitle}>Saat Seçin</Text>
-                    <TouchableOpacity
-                      onPress={() => setShowTimePicker(false)}
-                      style={styles.pickerCloseButton}
-                    >
-                      <Text style={styles.pickerCloseText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                  
-                  <ScrollView style={styles.timeScrollContainer}>
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const hour = Math.floor(i / 2);
-                      const minute = (i % 2) * 30;
-                      
-                      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-                      const isSelected = treatmentTime === timeStr;
-                      
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          onPress={() => {
-                            console.log('Time selected:', timeStr);
-                            setTreatmentTime(timeStr);
-                            const newTime = new Date();
-                            newTime.setHours(hour, minute, 0, 0);
-                            setSelectedTime(newTime);
-                            setShowTimePicker(false);
-                          }}
-                          style={[
-                            styles.timeOption,
-                            isSelected && styles.selectedTimeOption
-                          ]}
-                        >
-                          <Text style={[
-                            styles.timeOptionText,
-                            isSelected && styles.selectedTimeOptionText
-                          ]}>
-                            {timeStr}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Tedavi Açıklaması *</Text>
+                  <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Tedavi detaylarını açıklayın..."
+                    placeholderTextColor="#9CA3AF"
+                    multiline
+                    numberOfLines={3}
+                  />
                 </View>
-              )}
-
-              {/* Main Form - Only show when no picker is active */}
-              {!showDatePicker && !showTimePicker && (
-                <>
-                  <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>
-                      {editingTreatment ? 'Tedavi Kaydını Düzenle' : 'Yeni Tedavi Ekle'}
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Tedavi Tarihi *</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      console.log('Date button pressed!');
+                      setShowDatePicker(true);
+                    }}
+                    style={styles.datePickerButton}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.datePickerButtonText}>
+                      {formatDisplayDate(treatmentDate)}
                     </Text>
-                    <TouchableOpacity
-                      onPress={closeModal}
-                      style={styles.closeButton}
-                    >
-                      <Text style={styles.closeButtonText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                  
-                  <ScrollView style={styles.modalContent}>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Tedavi Türü *</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={treatmentType}
-                        onChangeText={setTreatmentType}
-                        placeholder="Örn: Parazit tedavisi, Diş temizliği, Cerrahi..."
-                        placeholderTextColor="#9CA3AF"
-                      />
-                    </View>
-                    
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Tedavi Açıklaması *</Text>
-                      <TextInput
-                        style={[styles.textInput, styles.textArea]}
-                        value={description}
-                        onChangeText={setDescription}
-                        placeholder="Tedavi detaylarını açıklayın..."
-                        placeholderTextColor="#9CA3AF"
-                        multiline
-                        numberOfLines={3}
-                      />
-                    </View>
-                    
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Tedavi Tarihi *</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          console.log('Date button pressed!');
-                          console.log('Current showDatePicker state:', showDatePicker);
-                          setShowDatePicker(true);
-                          console.log('Setting showDatePicker to true');
-                        }}
-                        style={styles.datePickerButton}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.datePickerButtonText}>
-                          {formatDisplayDate(treatmentDate)}
-                        </Text>
-                        <Text style={styles.datePickerIcon}>📅</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <Text style={styles.datePickerIcon}>📅</Text>
+                  </TouchableOpacity>
+                </View>
 
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Tedavi Saati *</Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          console.log('Time button pressed!');
-                          console.log('Current showTimePicker state:', showTimePicker);
-                          setShowTimePicker(true);
-                          console.log('Setting showTimePicker to true');
-                        }}
-                        style={styles.timePickerButton}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.timePickerButtonText}>
-                          {formatDisplayTime(treatmentTime)}
-                        </Text>
-                        <Text style={styles.timePickerIcon}>🕐</Text>
-                      </TouchableOpacity>
-                    </View>
-                    
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>Veteriner *</Text>
-                      <TextInput
-                        style={styles.textInput}
-                        value={veterinarian}
-                        onChangeText={setVeterinarian}
-                        placeholder="Veteriner adını girin"
-                        placeholderTextColor="#9CA3AF"
-                      />
-                    </View>
-                    
-                    <View style={styles.buttonContainer}>
-                      <TouchableOpacity
-                        onPress={closeModal}
-                        style={styles.cancelButton}
-                      >
-                        <Text style={styles.cancelButtonText}>İptal</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={handleSubmit}
-                        disabled={isSubmitting}
-                        style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
-                      >
-                        <Text style={styles.saveButtonText}>
-                          {isSubmitting ? 'Kaydediliyor...' : (editingTreatment ? 'Güncelle' : 'Kaydet')}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </ScrollView>
-                </>
-              )}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Tedavi Saati *</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      console.log('Time button pressed!');
+                      setShowTimePicker(true);
+                    }}
+                    style={styles.timePickerButton}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.timePickerButtonText}>
+                      {formatDisplayTime(treatmentTime)}
+                    </Text>
+                    <Text style={styles.timePickerIcon}>🕐</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Veteriner *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={veterinarian}
+                    onChangeText={setVeterinarian}
+                    placeholder="Veteriner adını girin"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+                
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    onPress={closeModal}
+                    style={styles.cancelButton}
+                  >
+                    <Text style={styles.cancelButtonText}>İptal</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={handleSubmit}
+                    disabled={isSubmitting}
+                    style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
+                  >
+                    <Text style={styles.saveButtonText}>
+                      {isSubmitting ? 'Kaydediliyor...' : (editingTreatment ? 'Güncelle' : 'Kaydet')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
           </View>
         </Modal>
       </View>
+      
+      <DateTimePickerModals
+        showDatePicker={showDatePicker}
+        showTimePicker={showTimePicker}
+        setShowDatePicker={setShowDatePicker}
+        setShowTimePicker={setShowTimePicker}
+        appointmentDate={treatmentDate}
+        appointmentTime={treatmentTime}
+        setAppointmentDate={setTreatmentDate}
+        setAppointmentTime={setTreatmentTime}
+        setSelectedDate={setSelectedDate}
+        setSelectedTime={setSelectedTime}
+      />
+    </>
+  );
+};
+
+// Date and Time Picker Modals - OUTSIDE the main component to avoid conflicts
+const DateTimePickerModals: React.FC<{
+  showDatePicker: boolean;
+  showTimePicker: boolean;
+  setShowDatePicker: (show: boolean) => void;
+  setShowTimePicker: (show: boolean) => void;
+  appointmentDate: string;
+  appointmentTime: string;
+  setAppointmentDate: (date: string) => void;
+  setAppointmentTime: (time: string) => void;
+  setSelectedDate: (date: Date) => void;
+  setSelectedTime: (time: Date) => void;
+}> = ({
+  showDatePicker,
+  showTimePicker,
+  setShowDatePicker,
+  setShowTimePicker,
+  appointmentDate,
+  appointmentTime,
+  setAppointmentDate,
+  setAppointmentTime,
+  setSelectedDate,
+  setSelectedTime,
+}) => {
+  return (
+    <>
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerContainer}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Tarih Seçin</Text>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(false)}
+                style={styles.pickerCloseButton}
+              >
+                <Text style={styles.pickerCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.dateScrollContainer}>
+              {Array.from({ length: 90 }, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - 30 + i); // 30 days in past to 60 days in future
+                const dateStr = date.toISOString().split('T')[0];
+                const isSelected = appointmentDate === dateStr;
+                
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => {
+                      console.log('Date selected:', dateStr);
+                      setAppointmentDate(dateStr);
+                      setSelectedDate(date);
+                      setShowDatePicker(false);
+                    }}
+                    style={[
+                      styles.dateOption,
+                      isSelected && styles.selectedDateOption
+                    ]}
+                  >
+                    <Text style={[
+                      styles.dateOptionText,
+                      isSelected && styles.selectedDateOptionText
+                    ]}>
+                      {date.toLocaleDateString('tr-TR', {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Time Picker Modal */}
+      <Modal
+        visible={showTimePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <View style={styles.pickerOverlay}>
+          <View style={styles.pickerContainer}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Saat Seçin</Text>
+              <TouchableOpacity
+                onPress={() => setShowTimePicker(false)}
+                style={styles.pickerCloseButton}
+              >
+                <Text style={styles.pickerCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.timeScrollContainer}>
+              {Array.from({ length: 24 }, (_, i) => {
+                const hour = Math.floor(6 + (i * 0.5)); // 6:00 to 20:00 every 30 minutes
+                const minute = (i % 2) * 30;
+                const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                const isSelected = appointmentTime === timeStr;
+                
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => {
+                      console.log('Time selected:', timeStr);
+                      setAppointmentTime(timeStr);
+                      const newTime = new Date();
+                      newTime.setHours(hour, minute, 0, 0);
+                      setSelectedTime(newTime);
+                      setShowTimePicker(false);
+                    }}
+                    style={[
+                      styles.timeOption,
+                      isSelected && styles.selectedTimeOption
+                    ]}
+                  >
+                    <Text style={[
+                      styles.timeOptionText,
+                      isSelected && styles.selectedTimeOptionText
+                    ]}>
+                      {timeStr}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -969,15 +1015,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   datePickerButtonText: {
     fontSize: 16,
     color: '#1f2937',
     fontWeight: '500',
-    flex: 1,
   },
   timePickerButton: {
     borderWidth: 2,
@@ -985,15 +1027,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   timePickerButtonText: {
     fontSize: 16,
     color: '#1f2937',
     fontWeight: '500',
-    flex: 1,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -1026,12 +1064,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-  pickerFullContainer: {
+  pickerOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerContainer: {
     backgroundColor: 'white',
     borderRadius: 16,
     margin: 20,
-    maxHeight: '80%',
+    maxHeight: '70%',
     width: '90%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -1120,10 +1163,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   datePickerIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
     fontSize: 16,
     color: '#6b7280',
   },
   timePickerIcon: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
     fontSize: 16,
     color: '#6b7280',
   },
